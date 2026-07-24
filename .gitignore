@@ -38,15 +38,3 @@ codegen/
 # SimBiology backup files
 *.sbproj.backup
 *.sbproj.bak
-
-# LaTeX auxiliary files
-*.aux
-*.log
-*.out
-*.toc
-*.synctex.gz
-
-# Huge generated files and large local data caches
-tau_sym.txt
-*.mat
-*.original
