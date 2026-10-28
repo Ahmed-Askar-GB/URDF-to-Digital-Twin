@@ -263,7 +263,7 @@ The remainder of the paper is organized as follows. The next three sections deta
 	\end{proof}
 	
 	\begin{remark}[Mass Matrix Scaling and Empirical Complexity Bounds]
-		Analytically, constructing $\bm{M}(\bm{q}) = \sum_{i=1}^n (m_i \bm{J}_{v,i}^T\bm{J}_{v,i} + \bm{J}_{\omega,i}^T \bm{I}_i^0 \bm{J}_{\omega,i})$ naively requires $\sum_{i=1}^n i^2 = \frac{n(n+1)(2n+1)}{6} = \mathcal{O}(n^3)$ operations. Under computer-algebra and algorithmic differentiation systems, compiler common subexpression elimination (CSE) automatically merges redundant trigonometric sub-trees across kinematic frames. Across our systematic scalability benchmark ($n \in [3, 14]$, Table~\ref{tab:table4_scalability}), power-law log-log regressions yield an empirical scaling exponent of $\alpha = 2.27 \pm 0.10$ ($R^2 = 0.9985$) for $\bm{M}(\bm{q})$ and $\alpha = 2.28 \pm 0.09$ ($R^2 = 0.9989$) for the proposed momentum bias vector $\mathbf{c}_{\text{bias}}$. This empirically confirms that $\operatorname{cost}(\mathbf{c}_{\text{bias}})$ scales as a constant multiple ($3.98 \pm 0.04\times$) of $\operatorname{cost}(\bm{M})$, in contrast to classical Christoffel evaluation which scales at $\alpha = 3.24 \pm 0.14$ ($R^2 = 0.9985$).
+		Analytically, constructing $\bm{M}(\bm{q}) = \sum_{i=1}^n (m_i \bm{J}_{v,i}^T\bm{J}_{v,i} + \bm{J}_{\omega,i}^T \bm{I}_i^0 \bm{J}_{\omega,i})$ naively requires $\sum_{i=1}^n i^2 = \frac{n(n+1)(2n+1)}{6} = \mathcal{O}(n^3)$ operations. Under computer-algebra and algorithmic differentiation systems, compiler common subexpression elimination (CSE) automatically merges redundant trigonometric sub-trees across kinematic frames. Across our systematic scalability benchmark ($n \in [3, 14]$, Table~\ref{tab:table3_scalability}), power-law log-log regressions yield an empirical scaling exponent of $\alpha = 2.27 \pm 0.10$ ($R^2 = 0.9985$) for $\bm{M}(\bm{q})$ and $\alpha = 2.28 \pm 0.09$ ($R^2 = 0.9989$) for the proposed momentum bias vector $\mathbf{c}_{\text{bias}}$. This empirically confirms that $\operatorname{cost}(\mathbf{c}_{\text{bias}})$ scales as a constant multiple ($3.98 \pm 0.04\times$) of $\operatorname{cost}(\bm{M})$, in contrast to classical Christoffel evaluation which scales at $\alpha = 3.24 \pm 0.14$ ($R^2 = 0.9985$).
 	\end{remark}
 	
 	\subsection{Forward Dynamics via Symbolic Cholesky Factorization}
@@ -374,29 +374,11 @@ The results are organized around five testable hypotheses, each addressing a dis
 
 \noindent\textbf{Hypothesis Tested:} \textit{Reformulating Coriolis and centrifugal effects via generalized momentum directional derivatives eliminates the combinatorial explosion of rank-3 Christoffel tensors, reducing symbolic instruction counts by over $50\%$ on 6-DOF industrial manipulators without numerical loss.}
 
-To test this hypothesis, we profiled the complete symbolic Directed Acyclic Graph (DAG) for the heavy-payload Universal Robots UR16e ($n=6$) in CasADi. Table~\ref{tab:table1_opcodes} details the operation counts across individual dynamic components comparing the classical Christoffel baseline against our proposed momentum formulation.
+To test this hypothesis, we profiled the complete symbolic Directed Acyclic Graph (DAG) for the heavy-payload Universal Robots UR16e ($n=6$) in CasADi across individual dynamic components, comparing the classical Christoffel baseline against our proposed momentum formulation. Constructing the kinetic metric tensor $\bm{M}(\bm{q}) = \sum_{i=1}^n (m_i \bm{J}_{v,i}^T \bm{J}_{v,i} + \bm{J}_{\omega,i}^T \bm{I}_i^0 \bm{J}_{\omega,i})$ and the closed-form gravitational torque vector $\bm{G}(\bm{q}) = -\sum_{i=1}^n \bm{J}_{v,i}^T m_i \bm{g}$ requires 2,190 and 334 scalar instructions, respectively, yielding an identical base graph for both approaches.
 
-\begin{table*}[!t]
-	\caption{\textbf{Symbolic Graph Profiling and Instruction Breakdown on the UR16e 6-DOF Manipulator.}}
-	\label{tab:table1_opcodes}
-	\centering
-	\small
-	\begin{tabularx}{\textwidth}{p{2.3cm}p{4.1cm}ccc>{\raggedright\arraybackslash}X}
-		\toprule
-		\textbf{Dynamic Term} & \textbf{Mathematical Formulation} & \textbf{Complexity} & \textbf{Baseline Op.} & \textbf{Proposed Op.} & \textbf{Symbolic Graph Impact} \\
-		\midrule
-		Mass Matrix $\bm{M}(\bm{q})$ & $\sum_{i=1}^n (m_i \bm{J}_{v,i}^T \bm{J}_{v,i} + \bm{J}_{\omega,i}^T \bm{I}_i^0 \bm{J}_{\omega,i})$ & $O(n^2)$ & 2,190 & 2,190 & Kinetic metric tensor ($6 \times 6$ strictly SPD). \\
-		Gravity Vector $\bm{G}(\bm{q})$ & $-\sum_{i=1}^n \bm{J}_{v,i}^T m_i \bm{g}$ & $O(n)$ & 334 & 334 & Closed-form gravitational torque vector in 3D. \\
-		Coriolis Bias $\mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}})$ & $\left(\frac{\partial (\bm{M}\dot{\bm{q}})}{\partial \bm{q}}\right)\dot{\bm{q}} - \frac{1}{2}\nabla_{\bm{q}}(\dot{\bm{q}}^T\bm{M}\dot{\bm{q}})$ & $O(n^2)$ vs.\ $O(n^4)$ & 14,936 & 5,495 & \textbf{-63.2\% opcodes} (Forward JVP and reverse gradient replace 216 Christoffel derivatives). \\
-		Inverse Dynamics $\bm{\tau}$ & $\bm{M}(\bm{q})\ddot{\bm{q}} + \mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}}) + \bm{G}(\bm{q})$ & $O(n^2)$ & 17,460 & 8,019 & \textbf{-54.1\% opcodes} ($108.8~\mu$s in Python, $9.19$~kHz throughput). \\
-		Forward Dynamics $\ddot{\bm{q}}$ & $\bm{R}^T \bm{y} = \bm{\tau} - \mathbf{c}_{\text{bias}} - \bm{G}, \; \bm{R}\ddot{\bm{q}} = \bm{y}$ & $O(n^3)$ Cholesky & 15,814 & 7,041 & \textbf{-55.4\% opcodes} ($1.92\times$ speedup: $78.7~\mu$s bare-metal ANSI C / $99.2~\mu$s Python vs.\ $151.5~\mu$s; no explicit inversion). \\
-		\bottomrule
-	\end{tabularx}
-\end{table*}
-
-The empirical instruction audit confirms the hypothesis:
+The empirical instruction audit on velocity-dependent and forward terms confirms the hypothesis:
 \begin{enumerate}
-	\item \textbf{Coriolis Graph Compression:} Bypassing the $n^3 = 216$ Christoffel partial derivatives slashes Coriolis evaluation from $14,936$ to $5,495$ scalar instructions---\textbf{a $63.2\%$ reduction in opcodes}.
+	\item \textbf{Coriolis Graph Compression:} Bypassing the $n^3 = 216$ Christoffel partial derivatives slashes Coriolis evaluation from $14,936$ to $5,495$ scalar instructions---\textbf{a $63.2\%$ reduction in opcodes} achieved by evaluating the forward Jacobian-vector product $\left(\frac{\partial (\bm{M}\dot{\bm{q}})}{\partial \bm{q}}\right)\dot{\bm{q}}$ and reverse kinetic energy gradient $\frac{1}{2}\nabla_{\bm{q}}(\dot{\bm{q}}^T\bm{M}\dot{\bm{q}})$. This directly compresses total inverse dynamics $\bm{\tau} = \bm{M}\ddot{\bm{q}} + \mathbf{c}_{\text{bias}} + \bm{G}$ from $17,460$ to $8,019$ opcodes (\textbf{$-54.1\%$ reduction}, executing in $108.8~\mu$s in Python/CasADi, $9.19$~kHz).
 	\item \textbf{Forward Dynamics Compression:} Coupling the momentum Coriolis derivative with symbolic Cholesky factorization reduces total forward dynamics opcodes from $15,814$ to $7,041$ (\textbf{$-55.4\%$ reduction}), accelerating single-step forward dynamics latency on an x86-64 CPU core from $151.5~\mu$s to \textbf{$78.7~\mu$s} in bare-metal compiled ANSI C ($99.2~\mu$s in Python/CasADi, representing a $1.92\times$ acceleration over explicit matrix inversion). Notably, inverse dynamics latency ($108.8~\mu$s) is slightly higher than forward dynamics latency ($99.2~\mu$s in Python, $78.7~\mu$s bare-metal C). This occurs because symbolic Cholesky forward dynamics resolves $\bm{R}^T \bm{y} = \bm{\tau} - \mathbf{c}_{\text{bias}} - \bm{G}$ directly through triangular back-substitution where CSE aggressively shares common kinematic projections between $\bm{M}(\bm{q})$ and $\mathbf{c}_{\text{bias}}$, whereas inverse dynamics evaluates the complete dense matrix-vector product $\bm{M}\ddot{\bm{q}}$ alongside the bias terms without triangular factoring shortcuts.
 	\item \textbf{Exact Machine Precision:} Across 10,000 random state evaluations, the absolute torque discrepancy between Eq.~\eqref{eq:cbias_exact} and Eq.~\eqref{eq:christoffel_classical} remained bounded by $4.16 \times 10^{-17}$~N$\cdot$m, confirming algebraic equivalence without numerical drift.
 \end{enumerate}
@@ -419,7 +401,7 @@ Pinocchio analytical C++ derivatives (\texttt{computeABADerivatives}) evaluated 
 
 \noindent\textbf{Hypothesis Tested:} \textit{The four-regime DH synthesis and the physical-consistency projection of inertia tensors deterministically resolve geometric gauge freedoms, manufacturer sign discrepancies, and unphysical CAD inertia models across diverse manipulator morphologies without manual parameter tuning.}
 
-Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Universal Robots UR5, UR16e, ABB IRB 120, and Unimation Puma 560). Table~\ref{tab:table2_morphology} summarizes their extracted kinematic, topological, and computational profiles, and Table~\ref{tab:table3_verification} details the results of the 5-stage verification dashboard.
+Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Universal Robots UR5, UR16e, ABB IRB 120, and Unimation Puma 560). Table~\ref{tab:table1_morphology} summarizes their extracted kinematic, topological, and computational profiles, and Table~\ref{tab:table2_verification} details the results of the 5-stage verification dashboard.
 
 \begin{figure*}[!t]
 	\centering
@@ -509,7 +491,7 @@ Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Univer
 
 \begin{table*}[!t]
 	\caption{\textbf{Extracted Kinematic, Inertial, Topological, and Computational Profiles Across Tested Manipulator Platforms.}}
-	\label{tab:table2_morphology}
+	\label{tab:table1_morphology}
 	\centering
 	\scriptsize
 	\setlength{\tabcolsep}{3pt}
@@ -527,7 +509,7 @@ Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Univer
 
 \begin{table*}[!t]
 	\caption{\textbf{Five-Stage Verification Results Across Four Industrial Manipulators.}}
-	\label{tab:table3_verification}
+	\label{tab:table2_verification}
 	\centering
 	\scriptsize
 	\setlength{\tabcolsep}{5pt}
@@ -555,7 +537,7 @@ The empirical results across the four-manipulator testbed confirm the morphologi
 
 \noindent\textbf{Hypothesis Tested:} \textit{Under compiler Common Subexpression Elimination (CSE), our proposed momentum directional derivative scales with an empirical power-law exponent of $\alpha \approx 2.29$ versus $\alpha \approx 3.25$ for classical Christoffel expansions, producing strictly monotonic instruction graph reductions and runtime speedups for all $n \ge 4$, while preserving sub-second derivation across all scales.}
 
-To test this scaling hypothesis, serial kinematic chains spanning $n \in \{3, 4, 6, 7, 10, 12, 14\}$ degrees of freedom were synthesized, parsed, and evaluated under identical compiler optimizations. Table~\ref{tab:table4_scalability} reports the comprehensive scaling metrics, and Figure~\ref{fig:fig6_scalability_complexity} visualizes the empirical regressions and runtime throughput.
+To test this scaling hypothesis, serial kinematic chains spanning $n \in \{3, 4, 6, 7, 10, 12, 14\}$ degrees of freedom were synthesized, parsed, and evaluated under identical compiler optimizations. Table~\ref{tab:table3_scalability} reports the comprehensive scaling metrics, and Figure~\ref{fig:fig6_scalability_complexity} visualizes the empirical regressions and runtime throughput.
 
 \begin{figure*}[!t]
 	\centering
@@ -566,7 +548,7 @@ To test this scaling hypothesis, serial kinematic chains spanning $n \in \{3, 4,
 
 \begin{table*}[!t]
 	\caption{\textbf{Quantitative Multi-DOF Complexity and Scalability Benchmark Across Serial Chains ($n \in [3, 14]$).}}
-	\label{tab:table4_scalability}
+	\label{tab:table3_scalability}
 	\centering
 	\scriptsize
 	\setlength{\tabcolsep}{2.5pt}
@@ -599,11 +581,11 @@ The multi-DOF scaling benchmark confirms the asymptotic hypothesis:
 
 \noindent\textbf{Hypothesis Tested:} \textit{Exact symbolic Lagrangian Hessians accelerate non-convex optimal control convergence by over $60\%$ in iteration counts relative to Quasi-Newton L-BFGS approximations, producing physically realizable dynamic trajectories that replay accurately in high-fidelity physics simulators.}
 
-To test this hypothesis, an offline trajectory optimization benchmark comprising 15 random boundary-value problems (BVPs) per platform was conducted across the UR5, UR16e, and KUKA iiwa 7 ($N=10$ shooting intervals, $\Delta t = 0.04$~s, torque limits, joint position limits, and workspace spherical obstacles). The problem was solved under: (i) our exact symbolic Lagrangian Hessian $\nabla_{\bm{w}\bm{w}}^2 \mathcal{L}$ (max 100 iterations), and (ii) Quasi-Newton L-BFGS approximation with an expanded cutoff of 500 iterations. Table~\ref{tab:table5_trajectory_opt} and Figure~\ref{fig:fig8_opt_and_mismatch}a report the comparative convergence metrics and dynamic replay accuracy.
+To test this hypothesis, an offline trajectory optimization benchmark comprising 15 random boundary-value problems (BVPs) per platform was conducted across the UR5, UR16e, and KUKA iiwa 7 ($N=10$ shooting intervals, $\Delta t = 0.04$~s, torque limits, joint position limits, and workspace spherical obstacles). The problem was solved under: (i) our exact symbolic Lagrangian Hessian $\nabla_{\bm{w}\bm{w}}^2 \mathcal{L}$ (max 100 iterations), and (ii) Quasi-Newton L-BFGS approximation with an expanded cutoff of 500 iterations. Table~\ref{tab:table4_trajectory_opt} and Figure~\ref{fig:fig8_opt_and_mismatch}a report the comparative convergence metrics and dynamic replay accuracy.
 
 \begin{table*}[!t]
 	\caption{\textbf{Constrained Offline Trajectory Optimization Benchmark Across 15 Random Boundary-Value Problems.}}
-	\label{tab:table5_trajectory_opt}
+	\label{tab:table4_trajectory_opt}
 	\centering
 	\scriptsize
 	\setlength{\tabcolsep}{1.5pt}
@@ -626,7 +608,7 @@ Across all 15 test problems, the exact Hessian formulation achieved \textbf{100.
 
 In contrast, Quasi-Newton L-BFGS converged only on the UR5, requiring $249.2 \pm 38.3$ iterations (solve time $3.905$~s, 95\% CI $[230.3, 268.3]$), demonstrating that the exact Hessian achieved a \textbf{96.8\% iteration reduction} and a \textbf{14.39$\times$ wall-clock speedup}. On the heavy-payload UR16e, L-BFGS achieved \textbf{0.0\% convergence}, timing out at the 500-iteration cutoff for all 15 boundary-value problems due to ill-conditioning near obstacle constraints. On the kinematically redundant 7-DOF KUKA iiwa 7, L-BFGS converged on only 1 out of 15 runs (\textbf{6.7\% convergence}), requiring 358 iterations ($7.802$~s), on which the exact Hessian achieved a \textbf{95.6\% iteration reduction} and a \textbf{9.82$\times$ wall-clock speedup}. These results demonstrate that exact second-order curvature is not merely an accelerator, but an absolute prerequisite for reliable convergence in constrained robot trajectory optimization.
 
-To verify dynamic consistency on a physics simulator, the optimized state and control trajectories were replayed within the MuJoCo simulation environment ($dt = 1$~ms) under closed-loop Computed Torque Control tracking versus pure open-loop torque replay. As reported in Table~\ref{tab:table5_trajectory_opt}, closed-loop tracking RMSE remained tightly bounded: $0.0916$~rad on UR5, $0.1710$~rad on UR16e, and $0.3871$~rad on KUKA iiwa 7. When the planned torque sequences were replayed pure open-loop without feedback, steady-state joint droop emerged ($0.3048$~rad on UR5, $0.3322$~rad on UR16e, and $1.1628$~rad on KUKA iiwa 7) due to unmodeled joint viscous damping and friction in the simulator plant that were absent from the idealized conservative Euler--Lagrange model. This disparity underscores a core premise of our framework: multibody simulators provide high-fidelity contact and friction modeling, while the generated closed-form model provides the necessary differential structure for trajectory synthesis and feedback linearization.
+To verify dynamic consistency on a physics simulator, the optimized state and control trajectories were replayed within the MuJoCo simulation environment ($dt = 1$~ms) under closed-loop Computed Torque Control tracking versus pure open-loop torque replay. As reported in Table~\ref{tab:table4_trajectory_opt}, closed-loop tracking RMSE remained tightly bounded: $0.0916$~rad on UR5, $0.1710$~rad on UR16e, and $0.3871$~rad on KUKA iiwa 7. When the planned torque sequences were replayed pure open-loop without feedback, steady-state joint droop emerged ($0.3048$~rad on UR5, $0.3322$~rad on UR16e, and $1.1628$~rad on KUKA iiwa 7) due to unmodeled joint viscous damping and friction in the simulator plant that were absent from the idealized conservative Euler--Lagrange model. This disparity underscores a core premise of our framework: multibody simulators provide high-fidelity contact and friction modeling, while the generated closed-form model provides the necessary differential structure for trajectory synthesis and feedback linearization.
 
 \subsection*{Trajectory Tracking: Model-Based Computed Torque Control versus Decentralized PID}
 
@@ -654,13 +636,13 @@ As shown in Figure~\ref{fig:fig3_tracking_ur16e}a--b, Black-Box PID suffers a pe
 
 \noindent\textbf{Hypothesis Tested:} \textit{Model-based Computed Torque Control synthesized from the generated closed-form model maintains superior tracking accuracy over model-free PID on the simulator plant under moderate parametric uncertainty, while revealing the need for integral compensation or adaptive identification under large unexpected point loads.}
 
-To evaluate closed-loop robustness against plant-model mismatch, the UR16e manipulator was simulated in MuJoCo forward dynamics across 10 randomized trials ($N=10$ seeds, $T=5.0$~s, $dt=1$~ms) under four distinct parametric disturbance levels: Level 0 (Nominal, 0\% mismatch), Level 1 ($\pm 10\%$ link mass and inertia perturbation), Level 2 ($\pm 20\%$ link mass and inertia perturbation), and Level 3 ($\pm 20\%$ mismatch combined with a sudden $+5.0$~kg unknown end-effector payload step). Table~\ref{tab:table6_mismatch_control} and Figure~\ref{fig:fig8_opt_and_mismatch}b summarize the tracking errors across Computed Torque Control (CTC), PD + Gravity compensation, and decentralized PID.
+To evaluate closed-loop robustness against plant-model mismatch, the UR16e manipulator was simulated in MuJoCo forward dynamics across 10 randomized trials ($N=10$ seeds, $T=5.0$~s, $dt=1$~ms) under four distinct parametric disturbance levels: Level 0 (Nominal, 0\% mismatch), Level 1 ($\pm 10\%$ link mass and inertia perturbation), Level 2 ($\pm 20\%$ link mass and inertia perturbation), and Level 3 ($\pm 20\%$ mismatch combined with a sudden $+5.0$~kg unknown end-effector payload step). Table~\ref{tab:table5_mismatch_control} and Figure~\ref{fig:fig8_opt_and_mismatch}b summarize the tracking errors across Computed Torque Control (CTC), PD + Gravity compensation, and decentralized PID.
 
 To ensure a fair and reproducible benchmark, controller gains were tuned according to a rigorous protocol. Decentralized PID gains for joints $1$--$6$ were established as $\bm{K}_p = [250, 300, 200, 150, 100, 80]$, $\bm{K}_d = [35, 45, 30, 20, 15, 10]$, and $\bm{K}_i = [20, 25, 15, 10, 5, 5]$ with an anti-windup saturation limit of $5.0$~N$\cdot$m. Derivative gains satisfied the classical critical damping criterion $K_{d,i} = 2\sqrt{K_{p,i} J_{ii,\text{nom}}}$, where $J_{ii,\text{nom}}$ represents the nominal diagonal inertia of joint axis $i$, and integral gains were chosen to eliminate steady-state gravitational droop without inducing oscillatory limit cycles. CTC gains were set to $\bm{K}_p = 200 \bm{I}_6$ and $\bm{K}_d = 30 \bm{I}_6$.
 
 \begin{table*}[!t]
 	\caption{\textbf{Model-Based Control on MuJoCo Physics Plant Under Parametric Mismatch ($N=10$ Randomized Seeds).}}
-	\label{tab:table6_mismatch_control}
+	\label{tab:table5_mismatch_control}
 	\centering
 	\scriptsize
 	\setlength{\tabcolsep}{1.5pt}
@@ -694,7 +676,7 @@ Under Level 3, however, the unmodeled $+5.0$~kg payload step introduced a persis
 
 \noindent\textbf{Hypothesis Tested:} \textit{Symbolic momentum--Cholesky compression reduces KKT constraint Jacobian opcodes by over $40\%$ in optimal control, accelerating online NLP solve times and mitigating peak latency spikes during active obstacle avoidance, with expanding benefits in kinematically redundant systems.}
 
-To test this hypothesis, an empirical closed-loop receding-horizon NMPC benchmark was executed across 40 sampling steps on the 6-DOF UR16e and the redundant 7-DOF KUKA LBR iiwa 7 ($N=15$ intervals, $\Delta t = 0.02$~s, $T_h = 0.30$~s, RK4 integration). Both manipulators tracked aggressive multi-harmonic trajectories while enforcing joint torque saturation bounds ($\pm 150$~N$\cdot$m for UR16e; $\pm 176 / 110 / 40$~N$\cdot$m for KUKA iiwa) and active workspace obstacle avoidance ($\|\bm{p}_{\text{ee}} - \bm{p}_{\text{obs}}\|_2 \ge r_{\text{obs}} + d_{\text{safe}}$ with $r_{\text{obs}} = 0.12$~m, $d_{\text{safe}} = 0.04$~m). Table~\ref{tab:table7_nmpc} and Figure~\ref{fig:fig7_nmpc_benchmark} summarize the quantitative results.
+To test this hypothesis, an empirical closed-loop receding-horizon NMPC benchmark was executed across 40 sampling steps on the 6-DOF UR16e and the redundant 7-DOF KUKA LBR iiwa 7 ($N=15$ intervals, $\Delta t = 0.02$~s, $T_h = 0.30$~s, RK4 integration). Both manipulators tracked aggressive multi-harmonic trajectories while enforcing joint torque saturation bounds ($\pm 150$~N$\cdot$m for UR16e; $\pm 176 / 110 / 40$~N$\cdot$m for KUKA iiwa) and active workspace obstacle avoidance ($\|\bm{p}_{\text{ee}} - \bm{p}_{\text{obs}}\|_2 \ge r_{\text{obs}} + d_{\text{safe}}$ with $r_{\text{obs}} = 0.12$~m, $d_{\text{safe}} = 0.04$~m). Table~\ref{tab:table6_nmpc} and Figure~\ref{fig:fig7_nmpc_benchmark} summarize the quantitative results.
 
 \begin{figure*}[!t]
 	\centering
@@ -705,7 +687,7 @@ To test this hypothesis, an empirical closed-loop receding-horizon NMPC benchmar
 
 \begin{table*}[!t]
 	\caption{\textbf{Empirical Closed-Loop Receding-Horizon NMPC Benchmark with Obstacle Avoidance across 6-DOF and 7-DOF Manipulators.}}
-	\label{tab:table7_nmpc}
+	\label{tab:table6_nmpc}
 	\centering
 	\scriptsize
 	\setlength{\tabcolsep}{3.0pt}
@@ -763,7 +745,7 @@ A foundational question in modern robotics architecture is: \textit{given that n
 
 \subsection*{Scalability Limits and Comparison with Recursive Algorithms}
 
-The multi-DOF scaling benchmark (Figure~\ref{fig:fig6_scalability_complexity} and Table~\ref{tab:table4_scalability}) provides quantitative clarity regarding where white-box symbolic AD graphs stand relative to recursive $\mathcal{O}(n)$ spatial algorithms (such as Featherstone's ABA in MuJoCo and Pinocchio).
+The multi-DOF scaling benchmark (Figure~\ref{fig:fig6_scalability_complexity} and Table~\ref{tab:table3_scalability}) provides quantitative clarity regarding where white-box symbolic AD graphs stand relative to recursive $\mathcal{O}(n)$ spatial algorithms (such as Featherstone's ABA in MuJoCo and Pinocchio).
 
 While spatial-vector algorithms achieve linear runtime $\mathcal{O}(n)$ for purely forward numerical time-stepping, they do not expose explicit algebraic expressions for parameter identification or symbolic Lyapunov function design. Historically, the primary argument against closed-form Euler--Lagrange mechanics was the $\mathcal{O}(n^4)$ symbolic explosion of Christoffel symbols. Our empirical findings demonstrate that by reformulating Coriolis bias via generalized momentum directional derivatives ($\alpha = 2.28$) and forward dynamics via symbolic Cholesky decomposition ($\alpha = 2.32$), the symbolic barrier is pushed far beyond classical 6-DOF limits:
 \begin{itemize}
@@ -777,7 +759,7 @@ We deliberately restricted the primary scope of this investigation to open-chain
 
 \subsection*{Implications for Receding-Horizon Optimal Control}
 
-The empirical closed-loop NMPC benchmark (Figure~\ref{fig:fig7_nmpc_benchmark} and Table~\ref{tab:table7_nmpc}) demonstrates that symbolic graph compression is not merely a theoretical algebra exercise, but directly relieves the dominant computational bottleneck of numerical optimal control solvers.
+The empirical closed-loop NMPC benchmark (Figure~\ref{fig:fig7_nmpc_benchmark} and Table~\ref{tab:table6_nmpc}) demonstrates that symbolic graph compression is not merely a theoretical algebra exercise, but directly relieves the dominant computational bottleneck of numerical optimal control solvers.
 
 In direct multiple shooting, each interior-point Newton iteration (Eq.~\eqref{eq:kkt_system}) solves a linear system whose dimension scales as $n_{\text{KKT}} \approx N(3n + n_c)$ where $n_c$ is the number of active inequality constraints. While the linear algebra step scales cubically with the block-banded matrix dimension, evaluating the constraint Jacobian blocks $\bm{A}_k = \partial \bm{\phi}_{\text{RK4}}/\partial \bm{x}_k$ and $\bm{B}_k = \partial \bm{\phi}_{\text{RK4}}/\partial \bm{u}_k$ requires differentiating the continuous forward dynamics $\ddot{\bm{q}}(\bm{q},\dot{\bm{q}},\bm{\tau})$ across all RK4 intermediate stages. Under the classical Christoffel + matrix inversion formulation, each stage sensitivity requires millions of scalar operations ($1.54 \times 10^6$ for UR16e and $3.18 \times 10^6$ for KUKA iiwa), swelling the total KKT dynamics Jacobian to $2.31 \times 10^7$ and $4.77 \times 10^7$ opcodes, respectively. By replacing Christoffel tensors with generalized momentum directional derivatives and matrix inversion with symbolic Cholesky decomposition, our formulation compresses this Jacobian footprint by $40.6\%$ on the 6-DOF UR16e and $48.2\%$ on the 7-DOF KUKA iiwa.
 
