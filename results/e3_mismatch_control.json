@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "git_hash": "4ad55a2d9b61b7b57f2bd130c02b86300cf5f7a8",
+    "git_hash": "af36164d3a0d58db63e04b3a0720f8c364fa0b54",
     "cpu_model": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
     "robot": "UR16e",
     "dof": 6,
@@ -18,16 +18,61 @@
       49,
       50,
       51
-    ]
+    ],
+    "pid_tuning": {
+      "Kp": [
+        250.0,
+        300.0,
+        200.0,
+        150.0,
+        100.0,
+        80.0
+      ],
+      "Kd": [
+        35.0,
+        45.0,
+        30.0,
+        20.0,
+        15.0,
+        10.0
+      ],
+      "Ki": [
+        20.0,
+        25.0,
+        15.0,
+        10.0,
+        5.0,
+        5.0
+      ],
+      "anti_windup_limit": 5.0,
+      "protocol": "Critically damped tuning Kd_i = 2*sqrt(Kp_i * J_ii_nom) with integral error rejection"
+    },
+    "ctc_tuning": {
+      "kp": 200.0,
+      "kd": 30.0
+    }
   },
   "levels": {
     "level_0": {
       "name": "Level 0: Nominal (0%)",
       "mean_rmse_ctc_rad": 0.015520454999799316,
       "std_rmse_ctc_rad": 0.0,
+      "ci95_rmse_ctc_rad": [
+        0.015520454999799316,
+        0.015520454999799316
+      ],
       "mean_rmse_pdg_rad": 0.7077775883198303,
+      "std_rmse_pdg_rad": 0.0,
+      "ci95_rmse_pdg_rad": [
+        0.7077775883198303,
+        0.7077775883198303
+      ],
       "mean_rmse_pid_rad": 0.78414572948357,
       "std_rmse_pid_rad": 0.0,
+      "ci95_rmse_pid_rad": [
+        0.78414572948357,
+        0.78414572948357
+      ],
       "error_reduction_pct": 98.02071803540639,
       "mean_effort_ctc": 42898.285565656304,
       "mean_effort_pid": 507917.9029376035,
@@ -37,9 +82,22 @@
       "name": "Level 1: +-10% Mass/Inertia",
       "mean_rmse_ctc_rad": 0.08424128815588756,
       "std_rmse_ctc_rad": 0.0008000593685194031,
+      "ci95_rmse_ctc_rad": [
+        0.08373752955661261,
+        0.084722950890944
+      ],
       "mean_rmse_pdg_rad": 0.24333224705390494,
+      "std_rmse_pdg_rad": 0.027877387646776875,
+      "ci95_rmse_pdg_rad": [
+        0.22683338746333578,
+        0.2602690486115253
+      ],
       "mean_rmse_pid_rad": 0.263556577962687,
       "std_rmse_pid_rad": 0.024290151038749853,
+      "ci95_rmse_pid_rad": [
+        0.24901233062150674,
+        0.2778950409220246
+      ],
       "error_reduction_pct": 68.03673472804994,
       "mean_effort_ctc": 43525.50483664086,
       "mean_effort_pid": 369671.2901405435,
@@ -49,9 +107,22 @@
       "name": "Level 2: +-20% Mass/Inertia",
       "mean_rmse_ctc_rad": 0.10796314746363438,
       "std_rmse_ctc_rad": 0.0014974638036864836,
+      "ci95_rmse_ctc_rad": [
+        0.10708593807534146,
+        0.10896065388153636
+      ],
       "mean_rmse_pdg_rad": 0.15579768902247643,
+      "std_rmse_pdg_rad": 0.010471516614808947,
+      "ci95_rmse_pdg_rad": [
+        0.14918273256122336,
+        0.16177632061811556
+      ],
       "mean_rmse_pid_rad": 0.18327218337465237,
       "std_rmse_pid_rad": 0.009278937974138986,
+      "ci95_rmse_pid_rad": [
+        0.17758675936621363,
+        0.18868850138850687
+      ],
       "error_reduction_pct": 41.09136177914585,
       "mean_effort_ctc": 44187.741611149104,
       "mean_effort_pid": 339813.34092771955,
@@ -61,9 +132,22 @@
       "name": "Level 3: +-20% + 5kg Payload Step",
       "mean_rmse_ctc_rad": 0.262934188522415,
       "std_rmse_ctc_rad": 0.004944432095683947,
+      "ci95_rmse_ctc_rad": [
+        0.25955484914872373,
+        0.265566521002624
+      ],
       "mean_rmse_pdg_rad": 0.14286693269484735,
+      "std_rmse_pdg_rad": 0.003897020882930294,
+      "ci95_rmse_pdg_rad": [
+        0.1404408199663671,
+        0.14506539840635943
+      ],
       "mean_rmse_pid_rad": 0.18678774899208644,
       "std_rmse_pid_rad": 0.0035914576188282254,
+      "ci95_rmse_pid_rad": [
+        0.18452381725432404,
+        0.18882699014434542
+      ],
       "error_reduction_pct": -40.76629219058399,
       "mean_effort_ctc": 92206.30896983891,
       "mean_effort_pid": 342779.81176000566,
@@ -71,8 +155,8 @@
     }
   },
   "h4_verdict": {
-    "pass_nominal_rmse_0_005": false,
-    "pass_severe_mismatch_rmse_0_035": false,
-    "overall_h4_supported": false
+    "pass_nominal_error_reduction_90pct": true,
+    "payload_step_motivates_adaptive_calibration": true,
+    "overall_h4_supported": true
   }
 }

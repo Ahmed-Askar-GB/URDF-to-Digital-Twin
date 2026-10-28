@@ -8,14 +8,11 @@
 		\toprule
 		\textbf{Manipulator} & \textbf{Formulation} & \shortstack{\textbf{Mean Solve}\\\textbf{(ms)}} & \shortstack{\textbf{Median}\\\textbf{(ms)}} & \shortstack{\textbf{p95 Spike}\\\textbf{(ms)}} & \shortstack{\textbf{p99 Spike}\\\textbf{(ms)}} & \shortstack{\textbf{Speedup}\\\textbf{Factor}} & \shortstack{\textbf{Achievable}\\\textbf{Rate (Hz)}} & \shortstack{\textbf{RMSE}\\\textbf{(rad)}} \\
 		\midrule
-		\multirow{2}{*}{\shortstack[l]{\textbf{UR16e}\\($n=6$)}} & Baseline (Christoffel+Inv) & 7366.7 & 7427.5 & 8916.3 & 9241.7 & \textemdash & 0.13 & 0.3128 \\
-		& Proposed (Momentum+Chol) & 4928.5$^\dagger$ & \textbf{4928.5} & \textbf{7360.8} & \textbf{8813.8} & \textbf{1.51$\times$} & \textbf{0.20} & 0.2930 \\
+		\multirow{2}{*}{\shortstack[l]{\textbf{UR16e}\\($n=6$)}} & Baseline (Christoffel+Inv) & 4734.6 & 4620.5 & 5508.5 & 6880.9 & \textemdash & 0.21 & 0.3128 \\
+		& Proposed (Momentum+Chol) & \textbf{3009.5} & \textbf{2865.5} & \textbf{3626.3} & \textbf{3890.7} & \textbf{1.57$\times$} & \textbf{0.33} & 0.2930 \\
 		\midrule
-		\multirow{2}{*}{\shortstack[l]{\textbf{KUKA iiwa 7}\\($n=7$)}} & Baseline (Christoffel+Inv) & 9202.3 & 9328.6 & 12047.3 & 12481.3 & \textemdash & 0.11 & 2.1555 \\
-		& Proposed (Momentum+Chol) & \textbf{4817.5} & \textbf{4609.4} & \textbf{6546.0} & \textbf{6938.1} & \textbf{1.91$\times$} & \textbf{0.21} & 3.8118 \\
+		\multirow{2}{*}{\shortstack[l]{\textbf{KUKA iiwa 7}\\($n=7$)}} & Baseline (Christoffel+Inv) & 8099.1 & 8112.6 & 9402.9 & 9954.4 & \textemdash & 0.12 & 2.1555 \\
+		& Proposed (Momentum+Chol) & \textbf{4968.2} & \textbf{4785.0} & \textbf{6560.4} & \textbf{7381.1} & \textbf{1.63$\times$} & \textbf{0.20} & 3.8118 \\
 		\bottomrule
 	\end{tabular*}
-	\begin{flushleft}
-		\vspace{-2pt}\scriptsize $^\dagger$Reported as uninterrupted median solve time; raw arithmetic mean was affected by an operating system sleep artifact on step 1.
-	\end{flushleft}
 \end{table*}

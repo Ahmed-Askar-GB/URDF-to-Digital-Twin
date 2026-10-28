@@ -1,15 +1,19 @@
 \begin{table*}[!t]
-	\caption{\textbf{Constrained Offline Trajectory Optimization Benchmark Across 50 Random Boundary-Value Problems.}}
+	\caption{\textbf{Constrained Offline Trajectory Optimization Benchmark Across 15 Random Boundary-Value Problems.}}
 	\label{tab:table7_trajectory_opt}
 	\centering
-	\small
-	\begin{tabularx}{\textwidth}{lcccc>{\raggedright\arraybackslash}X}
+	\scriptsize
+	\setlength{\tabcolsep}{1.5pt}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c c c c}
 		\toprule
-		\textbf{Manipulator} & \shortstack{\textbf{Exact Conv.}\\\textbf{(\%)}} & \shortstack{\textbf{L-BFGS Conv.}\\\textbf{(\%)}} & \shortstack{\textbf{Exact Iter.}\\\textbf{(Mean)}} & \shortstack{\textbf{L-BFGS Iter.}\\\textbf{(Cutoff)}} & \textbf{MuJoCo Replay Tracking RMSE (rad)} \\
+		\textbf{Manipulator} & \shortstack{\textbf{Exact}\\\textbf{Conv.}} & \shortstack{\textbf{L-BFGS}\\\textbf{Conv.}} & \shortstack{\textbf{Exact Iters}\\\textbf{[95\% CI]}} & \shortstack{\textbf{L-BFGS Iters}\\\textbf{[95\% CI]}} & \shortstack{\textbf{Solve Time (s)}\\\textbf{Exact / L-BFGS}} & \shortstack{\textbf{Speedup}\\\textbf{Factor}} & \shortstack{\textbf{Replay RMSE (rad)}\\\textbf{CTC / Open-Loop}} \\
 		\midrule
-		\textbf{UR5} ($n=6$) & 100.0\% & 0.0\% & 8.5 & 50.0 (\textbf{-83.0\%}) & $0.1099$ (Max: $0.1507$) \\
-		\textbf{UR16e} ($n=6$) & 100.0\% & 0.0\% & 12.6 & 50.0 (\textbf{-74.8\%}) & $0.1706$ (Max: $0.2028$) \\
-		\textbf{KUKA iiwa 7} ($n=7$) & 100.0\% & 0.0\% & 16.2 & 50.0 (\textbf{-67.5\%}) & $0.4462$ (Max: $1.0772$) \\
+		\textbf{UR5} ($n=6$) & 100\% & 100.0\% & 7.9 [7.4, 8.5] & 249.2 [230.3, 268.3] & 0.27 / 3.90 & \textbf{14.39$\times$} & 0.0916 / 0.3048 \\
+		\textbf{UR16e} ($n=6$) & 100\% & 0.0\% & 12.0 [11.3, 12.6] & Cutoff (500 iters) & 0.52 / \textemdash & \textemdash & 0.1710 / 0.3322 \\
+		\textbf{KUKA iiwa 7} ($n=7$) & 100\% & 6.7\% & 15.6 [13.9, 17.3] & 358.0 [358.0, 358.0] & 0.79 / 7.80 & \textbf{9.82$\times$} & 0.3871 / 1.1628 \\
 		\bottomrule
-	\end{tabularx}
+	\end{tabular*}
+	\begin{flushleft}
+		\vspace{-2pt}\scriptsize Note: Solver iteration counts and wall-clock times are evaluated strictly over converged runs ($N=15$ problems per arm). For UR16e, Quasi-Newton (L-BFGS) timed out at 500 iterations for all 15 seeds (0\% convergence). For KUKA iiwa 7, only 1 of 15 seeds converged within 500 iterations under L-BFGS. MuJoCo dynamic replay reports trajectory tracking RMSE under closed-loop Computed Torque Control (CTC) versus pure open-loop torque replay.
+	\end{flushleft}
 \end{table*}

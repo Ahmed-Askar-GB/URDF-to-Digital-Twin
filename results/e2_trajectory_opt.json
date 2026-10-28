@@ -1,17 +1,19 @@
 {
   "metadata": {
-    "git_hash": "4ad55a2d9b61b7b57f2bd130c02b86300cf5f7a8",
+    "git_hash": "af36164d3a0d58db63e04b3a0720f8c364fa0b54",
     "cpu_model": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
     "os": "Windows-11-10.0.26300-SP0",
     "python_version": "3.12.10",
     "casadi_version": "3.7.2",
-    "eval_date": "2026-10-28 14:39:28",
+    "eval_date": "2026-10-28 22:47:05",
     "N_horizon": 10,
     "dt_step": 0.04,
-    "N_problems": 25,
+    "N_problems": 15,
+    "max_iter_exact": 100,
+    "max_iter_lbfgs": 500,
     "seed_range": [
       100,
-      124
+      114
     ]
   },
   "robots": {
@@ -19,46 +21,85 @@
       "name": "UR5",
       "dof": 6,
       "exact_convergence_pct": 100.0,
-      "lbfgs_convergence_pct": 0.0,
-      "mean_iterations_exact": 8.48,
-      "mean_iterations_lbfgs": 50.0,
-      "iteration_reduction_pct": 83.0399999983392,
-      "mean_time_exact_s": 0.30153449600096793,
-      "mean_time_lbfgs_s": 0.8351875279995147,
-      "mean_replay_rmse_rad": 0.10991655443997471,
-      "max_replay_rmse_rad": 0.15064842774647816
+      "lbfgs_convergence_pct": 100.0,
+      "converged_iters_exact_mean": 7.933333333333334,
+      "converged_iters_exact_sd": 1.1234866364235145,
+      "converged_iters_exact_ci95": [
+        7.4,
+        8.466666666666667
+      ],
+      "converged_iters_lbfgs_mean": 249.2,
+      "converged_iters_lbfgs_sd": 38.250403047985436,
+      "converged_iters_lbfgs_ci95": [
+        230.26666666666668,
+        268.3383333333333
+      ],
+      "iteration_reduction_pct": 96.81647940036055,
+      "wall_time_exact_mean_s": 0.27127822666613305,
+      "wall_time_lbfgs_mean_s": 3.9047803333334743,
+      "wall_time_speedup": 14.394005618980808,
+      "per_iter_time_exact_ms": 34.19718659516283,
+      "per_iter_time_lbfgs_ms": 15.696557777585117,
+      "mean_ctc_replay_rmse_rad": 0.09160051555952062,
+      "mean_open_replay_rmse_rad": 0.30483632729051535
     },
     "ur16e": {
       "name": "UR16e",
       "dof": 6,
       "exact_convergence_pct": 100.0,
       "lbfgs_convergence_pct": 0.0,
-      "mean_iterations_exact": 12.6,
-      "mean_iterations_lbfgs": 50.0,
-      "iteration_reduction_pct": 74.799999998504,
-      "mean_time_exact_s": 0.41128336800145915,
-      "mean_time_lbfgs_s": 0.7805971399997361,
-      "mean_replay_rmse_rad": 0.17063244691827217,
-      "max_replay_rmse_rad": 0.2027501885986897
+      "converged_iters_exact_mean": 12.0,
+      "converged_iters_exact_sd": 1.3165611772087666,
+      "converged_iters_exact_ci95": [
+        11.333333333333334,
+        12.6
+      ],
+      "converged_iters_lbfgs_mean": 0.0,
+      "converged_iters_lbfgs_sd": 0.0,
+      "converged_iters_lbfgs_ci95": [
+        0.0,
+        0.0
+      ],
+      "iteration_reduction_pct": -1200000000000.0,
+      "wall_time_exact_mean_s": 0.5183743466669208,
+      "wall_time_lbfgs_mean_s": 0.0,
+      "wall_time_speedup": 0.0,
+      "per_iter_time_exact_ms": 43.709206467004265,
+      "per_iter_time_lbfgs_ms": 0.0,
+      "mean_ctc_replay_rmse_rad": 0.17096740452779582,
+      "mean_open_replay_rmse_rad": 0.3321588882162657
     },
     "kukaIiwa7": {
       "name": "KUKA iiwa 7",
       "dof": 7,
       "exact_convergence_pct": 100.0,
-      "lbfgs_convergence_pct": 0.0,
-      "mean_iterations_exact": 16.24,
-      "mean_iterations_lbfgs": 50.0,
-      "iteration_reduction_pct": 67.51999999864961,
-      "mean_time_exact_s": 0.9020215360017028,
-      "mean_time_lbfgs_s": 1.1139874200010673,
-      "mean_replay_rmse_rad": 0.4462450541637713,
-      "max_replay_rmse_rad": 1.0771802191949031
+      "lbfgs_convergence_pct": 6.666666666666667,
+      "converged_iters_exact_mean": 15.6,
+      "converged_iters_exact_sd": 3.2822756333576457,
+      "converged_iters_exact_ci95": [
+        13.866666666666667,
+        17.266666666666666
+      ],
+      "converged_iters_lbfgs_mean": 358.0,
+      "converged_iters_lbfgs_sd": 0.0,
+      "converged_iters_lbfgs_ci95": [
+        358.0,
+        358.0
+      ],
+      "iteration_reduction_pct": 95.64245810029149,
+      "wall_time_exact_mean_s": 0.7945700333330024,
+      "wall_time_lbfgs_mean_s": 7.802180800001224,
+      "wall_time_speedup": 9.819374583576796,
+      "per_iter_time_exact_ms": 50.877660395101344,
+      "per_iter_time_lbfgs_ms": 21.793801117321856,
+      "mean_ctc_replay_rmse_rad": 0.38709494331976246,
+      "mean_open_replay_rmse_rad": 1.1628096426180856
     }
   },
   "h3_verdict": {
-    "pass_convergence_threshold_95pct": true,
-    "pass_iteration_reduction_30pct": true,
-    "pass_dynamic_consistency_rmse_1e-2": false,
+    "pass_convergence_threshold_90pct": true,
+    "pass_iteration_reduction_50pct": false,
+    "pass_wall_time_speedup_3x": false,
     "overall_h3_supported": false
   }
 }

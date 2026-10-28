@@ -2,15 +2,16 @@
 	\caption{\textbf{Model-Based Control on MuJoCo Physics Plant Under Parametric Mismatch ($N=10$ Randomized Seeds).}}
 	\label{tab:table8_mismatch_control}
 	\centering
-	\small
-	\begin{tabularx}{\textwidth}{p{4.2cm}cccc>{\raggedright\arraybackslash}X}
+	\scriptsize
+	\setlength{\tabcolsep}{1.5pt}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c >{\raggedright\arraybackslash}p{2.8cm}}
 		\toprule
-		\textbf{Parametric Mismatch Condition} & \shortstack{\textbf{CTC RMSE}\\\textbf{(rad)}} & \shortstack{\textbf{PD+G RMSE}\\\textbf{(rad)}} & \shortstack{\textbf{PID RMSE}\\\textbf{(rad)}} & \shortstack{\textbf{Error Red.}\\\textbf{(\%)}} & \textbf{Robustness \& Chattering Assessment} \\
+		\textbf{Mismatch Condition} & \shortstack{\textbf{CTC RMSE (rad)}\\\textbf{[95\% CI]}} & \shortstack{\textbf{PD+G RMSE (rad)}\\\textbf{[95\% CI]}} & \shortstack{\textbf{PID RMSE (rad)}\\\textbf{[95\% CI]}} & \shortstack{\textbf{Error Red.}\\\textbf{(\%)}} & \textbf{Robustness \& Chattering Assessment} \\
 		\midrule
-		Level 0: Nominal ($0\%$) & $0.0155$ & $0.7078$ & $0.7842$ & \textbf{98.0\%} & Globally stable, 0 torque chattering across all 10 seeds. \\
-		Level 1: $\pm 10\%$ Mass/Inertia & $0.0842$ & $0.2433$ & $0.2636$ & \textbf{68.0\%} & Globally stable, 0 torque chattering across all 10 seeds. \\
-		Level 2: $\pm 20\%$ Mass/Inertia & $0.1080$ & $0.1558$ & $0.1833$ & \textbf{41.1\%} & Globally stable, 0 torque chattering across all 10 seeds. \\
-		Level 3: $\pm 20\%$ + $5$~kg Payload & $0.2629$ & $0.1429$ & $0.1868$ & \textbf{-40.8\%} & Integral PID compensates static load; motivates adaptive CTC. \\
+		Level 0: Nominal (0\%) & 0.0155 [0.0155, 0.0155] & 0.7078 [0.7078, 0.7078] & 0.7841 [0.7841, 0.7841] & \textbf{98.0\%} & Globally stable, 0 torque chattering across all 10 seeds. \\
+		Level 1: $\pm$10\% Mass/Inertia & 0.0842 [0.0837, 0.0847] & 0.2433 [0.2268, 0.2603] & 0.2636 [0.2490, 0.2779] & \textbf{68.0\%} & Globally stable, 0 torque chattering across all 10 seeds. \\
+		Level 2: $\pm$20\% Mass/Inertia & 0.1080 [0.1071, 0.1090] & 0.1558 [0.1492, 0.1618] & 0.1833 [0.1776, 0.1887] & \textbf{41.1\%} & Globally stable, 0 torque chattering across all 10 seeds. \\
+		Level 3: $\pm$20\% + 5kg Payload Step & 0.2629 [0.2596, 0.2656] & 0.1429 [0.1404, 0.1451] & 0.1868 [0.1845, 0.1888] & \textbf{-40.8\%} & Integral PID rejects static load; motivates adaptive CTC. \\
 		\bottomrule
-	\end{tabularx}
+	\end{tabular*}
 \end{table*}

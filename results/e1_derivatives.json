@@ -1,108 +1,211 @@
 {
   "metadata": {
-    "git_hash": "4ad55a2d9b61b7b57f2bd130c02b86300cf5f7a8",
+    "git_hash": "af36164d3a0d58db63e04b3a0720f8c364fa0b54",
     "cpu_model": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
     "os": "Windows-11-10.0.26300-SP0",
     "python_version": "3.12.10",
     "casadi_version": "3.7.2",
     "mujoco_version": "3.10.0",
-    "eval_date": "2026-10-28 13:44:40",
+    "eval_date": "2026-10-28 22:43:38",
     "seed": 42
   },
   "h1_precision": {
     "ur5": {
       "robot": "UR5",
       "dof": 6,
-      "err_prop_max": 2.309507917590617e-09,
-      "rel_prop_max": 2.3092234501504342e-09,
-      "err_mujoco_fd_max": 0.05771302131869388,
-      "rel_mujoco_fd_max": 0.057705912671424636,
-      "h1_pass_prop_exact": true,
-      "h1_pass_mj_fd_truncation": true,
-      "exact_hessian_available": true
+      "err_ad_vs_reference": 2.309507917590617e-09,
+      "rel_ad_vs_reference": 2.3092234501504342e-09,
+      "err_mujoco_euler_vs_ad": 0.05770980952554527,
+      "rel_mujoco_euler_vs_ad": 0.05770352609395939,
+      "exact_hessian_available": true,
+      "latency_prop_euler_us": 473.9934999997786,
+      "latency_prop_rk4_us": 3532.4485000091954,
+      "latency_mujoco_euler_us": 76.4665000133391,
+      "mujoco_rk4_supported": false
     },
     "ur16e": {
       "robot": "UR16e",
       "dof": 6,
-      "err_prop_max": 1.5268619219226814e-08,
-      "rel_prop_max": 1.5262603029301376e-08,
-      "err_mujoco_fd_max": 0.26550355489536054,
-      "rel_mujoco_fd_max": 0.26539894033615696,
-      "h1_pass_prop_exact": true,
-      "h1_pass_mj_fd_truncation": true,
-      "exact_hessian_available": true
+      "err_ad_vs_reference": 1.5268619219226814e-08,
+      "rel_ad_vs_reference": 1.5262603029301376e-08,
+      "err_mujoco_euler_vs_ad": 0.2654924420339465,
+      "rel_mujoco_euler_vs_ad": 0.2653970251100327,
+      "exact_hessian_available": true,
+      "latency_prop_euler_us": 669.8700000015378,
+      "latency_prop_rk4_us": 5039.716499995848,
+      "latency_mujoco_euler_us": 112.21900000236928,
+      "mujoco_rk4_supported": false
     },
     "kukaIiwa7": {
       "robot": "KUKA iiwa 7",
       "dof": 7,
-      "err_prop_max": 1.023368008878315e-09,
-      "rel_prop_max": 1.0229391185439863e-09,
-      "err_mujoco_fd_max": 0.6887985029506147,
-      "rel_mujoco_fd_max": 0.688509829776681,
-      "h1_pass_prop_exact": true,
-      "h1_pass_mj_fd_truncation": true,
-      "exact_hessian_available": true
+      "err_ad_vs_reference": 1.023368008878315e-09,
+      "rel_ad_vs_reference": 1.0229391185439863e-09,
+      "err_mujoco_euler_vs_ad": 0.6886397271781872,
+      "rel_mujoco_euler_vs_ad": 0.6883470791922939,
+      "exact_hessian_available": true,
+      "latency_prop_euler_us": 1068.7470000084431,
+      "latency_prop_rk4_us": 7003.945500000555,
+      "latency_mujoco_euler_us": 117.5859999966633,
+      "mujoco_rk4_supported": false
     }
   },
-  "h2_scaling": {
+  "fd_step_sweep": {
     "ur5": {
-      "robot": "UR5",
-      "dof": 6,
-      "latency_prop_us": 5060.258500016062,
-      "latency_mujoco_fd_us": 150.10500006610528,
-      "ratio_prop_to_mj": 33.711458630650846,
-      "h2_pass_faster_at_6_7": false
+      "eps_1e-08": {
+        "eps": 1e-08,
+        "max_abs_error": 2.018122102136026e-08,
+        "relative_error": 2.0178735253358073e-08
+      },
+      "eps_1e-06": {
+        "eps": 1e-06,
+        "max_abs_error": 1.1437773644873417e-10,
+        "relative_error": 1.1436364827651081e-10
+      },
+      "eps_1e-04": {
+        "eps": 0.0001,
+        "max_abs_error": 2.820214131671328e-10,
+        "relative_error": 2.819866759327484e-10
+      },
+      "eps_1e-02": {
+        "eps": 0.01,
+        "max_abs_error": 2.8152203038825374e-06,
+        "relative_error": 2.8148735466400947e-06
+      }
     },
     "ur16e": {
-      "robot": "UR16e",
-      "dof": 6,
-      "latency_prop_us": 4697.174000029918,
-      "latency_mujoco_fd_us": 163.15200002281927,
-      "ratio_prop_to_mj": 28.790171124743537,
-      "h2_pass_faster_at_6_7": false
+      "eps_1e-08": {
+        "eps": 1e-08,
+        "max_abs_error": 2.3720678692909676e-07,
+        "relative_error": 2.3711332195283884e-07
+      },
+      "eps_1e-06": {
+        "eps": 1e-06,
+        "max_abs_error": 1.908005600737006e-09,
+        "relative_error": 1.907253802272546e-09
+      },
+      "eps_1e-04": {
+        "eps": 0.0001,
+        "max_abs_error": 7.218914910289698e-10,
+        "relative_error": 7.216070490366335e-10
+      },
+      "eps_1e-02": {
+        "eps": 0.01,
+        "max_abs_error": 7.264017278851842e-06,
+        "relative_error": 7.261155087549078e-06
+      }
     },
     "kukaIiwa7": {
-      "robot": "KUKA iiwa 7",
-      "dof": 7,
-      "latency_prop_us": 8092.691999918316,
-      "latency_mujoco_fd_us": 271.0490000026766,
-      "ratio_prop_to_mj": 29.856933616462495,
-      "h2_pass_faster_at_6_7": false
+      "eps_1e-08": {
+        "eps": 1e-08,
+        "max_abs_error": 9.832981359703119e-09,
+        "relative_error": 9.828860389744302e-09
+      },
+      "eps_1e-06": {
+        "eps": 1e-06,
+        "max_abs_error": 1.0812520670477888e-10,
+        "relative_error": 1.0807989178834394e-10
+      },
+      "eps_1e-04": {
+        "eps": 0.0001,
+        "max_abs_error": 3.6117885127140426e-08,
+        "relative_error": 3.610274824096723e-08
+      },
+      "eps_1e-02": {
+        "eps": 0.01,
+        "max_abs_error": 0.0003608332170099704,
+        "relative_error": 0.00036068199300241403
+      }
     }
+  },
+  "h2_scaling_vs_n": {
+    "records": [
+      {
+        "dof": 3,
+        "latency_cont_jac_us": 122.78666666437249,
+        "latency_euler_jac_us": 125.67666672111955,
+        "latency_rk4_jac_us": 600.023333269443,
+        "latency_hessian_us": 53.9066666533472
+      },
+      {
+        "dof": 4,
+        "latency_cont_jac_us": 238.81666663025197,
+        "latency_euler_jac_us": 258.73333324852865,
+        "latency_rk4_jac_us": 1821.4033333303328,
+        "latency_hessian_us": 125.8366667267789
+      },
+      {
+        "dof": 6,
+        "latency_cont_jac_us": 967.3966666014167,
+        "latency_euler_jac_us": 909.3266666847437,
+        "latency_rk4_jac_us": 4890.216666656973,
+        "latency_hessian_us": 57.66333342762664
+      },
+      {
+        "dof": 7,
+        "latency_cont_jac_us": 1204.5866666691534,
+        "latency_euler_jac_us": 1079.340000069351,
+        "latency_rk4_jac_us": 8112.996666750406,
+        "latency_hessian_us": 158.56999998504762
+      },
+      {
+        "dof": 10,
+        "latency_cont_jac_us": 2603.2266666637342,
+        "latency_euler_jac_us": 2715.0100000047437,
+        "latency_rk4_jac_us": 21279.873333332944,
+        "latency_hessian_us": 175.74000000119364
+      },
+      {
+        "dof": 12,
+        "latency_cont_jac_us": 5028.660000001158,
+        "latency_euler_jac_us": 4988.113333335302,
+        "latency_rk4_jac_us": 39907.156666716524,
+        "latency_hessian_us": 200.87666659189077
+      },
+      {
+        "dof": 14,
+        "latency_cont_jac_us": 9838.539999933952,
+        "latency_euler_jac_us": 10285.460000037954,
+        "latency_rk4_jac_us": 77725.87666671218,
+        "latency_hessian_us": 162.583333440125
+      }
+    ],
+    "empirical_alpha_rk4_jac": 3.0153192181223414,
+    "h2_pass_sub_cubic": false
   },
   "capability_matrix": {
     "headers": [
       "Framework",
       "Continuous Jacobians",
-      "Discrete RK4 Jacobians",
-      "Exact Hessian",
+      "Discrete Jacobians",
+      "Exact Lagrangian Hessian",
       "Symbolic CSE",
       "Embedded C Export"
     ],
     "rows": [
       [
         "MuJoCo Physics",
-        "Finite Differences",
-        "Finite Differences (mjd)",
+        "Finite Differences (Euler)",
+        "mjd_transitionFD (Euler only)",
+        "No native API",
         "No",
-        "No",
-        "C Runtime"
+        "C Runtime library"
       ],
       [
-        "Pinocchio",
+        "Pinocchio (Spatial C++)",
         "Analytical (ABA/RNEA)",
-        "Semi-analytical / CasADi",
-        "Via CasADi binding",
-        "Yes",
-        "C++ / Python"
+        "Semi-analytical Euler",
+        "Via CasADi bridge",
+        "Yes (via CasADi)",
+        "C++ / Python bindings"
       ],
       [
         "Proposed Pipeline",
         "Exact Closed-Form AD",
-        "Exact Symbolic RK4 AD",
-        "Yes (Exact Lagrangian)",
+        "Exact Symbolic Euler & RK4",
+        "Yes (Exact Hessian)",
         "Yes (Full DAG)",
-        "Yes (ANSI C & DLL)"
+        "Yes (ANSI C99 static)"
       ]
     ]
   }
