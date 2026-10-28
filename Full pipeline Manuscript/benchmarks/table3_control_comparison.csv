@@ -1,0 +1,5 @@
+Robot,Trajectory,Black-Box PID RMS Error (rad),Partial PD+G RMS Error (rad),White-Box CTC RMS Error (rad),RMS Error Reduction (%),Max Error Reduction (%)
+UR16e,quintic_poly5,1.7221e+00,2.6662e+00,1.1238e-02,99.35%,99.28%
+UR16e,multi_sine_excitation,1.5303e+00,1.8434e+00,1.4518e-02,99.05%,98.83%
+UR5,quintic_poly5,9.9431e-02,2.6142e-02,4.2512e-03,95.72%,97.16%
+UR5,multi_sine_excitation,1.2871e-01,7.0240e-02,4.9525e-03,96.15%,96.71%

@@ -1,0 +1,34 @@
+{
+  "nominal_comparisons": {
+    "Tuned_PID": {
+      "rms_error_rad": 1.1839730736633556,
+      "max_error_rad": 1.3954856680064993
+    },
+    "Tuned_PD_G_FF": {
+      "rms_error_rad": 0.20009686917621122,
+      "max_error_rad": 0.26939163903842067
+    },
+    "WhiteBox_CTC": {
+      "rms_error_rad": 0.01123800248989595,
+      "max_error_rad": 0.018524208784218035
+    }
+  },
+  "parameter_robustness_ctc": {
+    "+0%": {
+      "rms_error_rad": 0.002238022313780039,
+      "max_error_rad": 0.003660486463729993
+    },
+    "+10%": {
+      "rms_error_rad": 0.009053822033034887,
+      "max_error_rad": 0.011826324070595634
+    },
+    "+20%": {
+      "rms_error_rad": 0.01745879214892147,
+      "max_error_rad": 0.023350589849325292
+    },
+    "+30%": {
+      "rms_error_rad": 0.026003203488066357,
+      "max_error_rad": 0.03497481941963827
+    }
+  }
+}

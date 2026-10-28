@@ -1,0 +1,16 @@
+\begin{table*}[!t]
+	\caption{\textbf{Model-Based Control on MuJoCo Physics Plant Under Parametric Mismatch ($N=10$ Randomized Seeds).}}
+	\label{tab:table8_mismatch_control}
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{p{4.2cm}cccc>{\raggedright\arraybackslash}X}
+		\toprule
+		\textbf{Parametric Mismatch Condition} & \shortstack{\textbf{CTC RMSE}\\\textbf{(rad)}} & \shortstack{\textbf{PD+G RMSE}\\\textbf{(rad)}} & \shortstack{\textbf{PID RMSE}\\\textbf{(rad)}} & \shortstack{\textbf{Error Red.}\\\textbf{(\%)}} & \textbf{Robustness \& Chattering Assessment} \\
+		\midrule
+		Level 0: Nominal ($0\%$) & $0.0155$ & $0.7078$ & $0.7842$ & \textbf{98.0\%} & Globally stable, 0 torque chattering across all 10 seeds. \\
+		Level 1: $\pm 10\%$ Mass/Inertia & $0.0842$ & $0.2433$ & $0.2636$ & \textbf{68.0\%} & Globally stable, 0 torque chattering across all 10 seeds. \\
+		Level 2: $\pm 20\%$ Mass/Inertia & $0.1080$ & $0.1558$ & $0.1833$ & \textbf{41.1\%} & Globally stable, 0 torque chattering across all 10 seeds. \\
+		Level 3: $\pm 20\%$ + $5$~kg Payload & $0.2629$ & $0.1429$ & $0.1868$ & \textbf{-40.8\%} & Integral PID compensates static load; motivates adaptive CTC. \\
+		\bottomrule
+	\end{tabularx}
+\end{table*}

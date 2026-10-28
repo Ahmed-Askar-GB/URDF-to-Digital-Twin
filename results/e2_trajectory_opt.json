@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "git_hash": "4ad55a2d9b61b7b57f2bd130c02b86300cf5f7a8",
+    "cpu_model": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+    "os": "Windows-11-10.0.26300-SP0",
+    "python_version": "3.12.10",
+    "casadi_version": "3.7.2",
+    "eval_date": "2026-10-28 14:39:28",
+    "N_horizon": 10,
+    "dt_step": 0.04,
+    "N_problems": 25,
+    "seed_range": [
+      100,
+      124
+    ]
+  },
+  "robots": {
+    "ur5": {
+      "name": "UR5",
+      "dof": 6,
+      "exact_convergence_pct": 100.0,
+      "lbfgs_convergence_pct": 0.0,
+      "mean_iterations_exact": 8.48,
+      "mean_iterations_lbfgs": 50.0,
+      "iteration_reduction_pct": 83.0399999983392,
+      "mean_time_exact_s": 0.30153449600096793,
+      "mean_time_lbfgs_s": 0.8351875279995147,
+      "mean_replay_rmse_rad": 0.10991655443997471,
+      "max_replay_rmse_rad": 0.15064842774647816
+    },
+    "ur16e": {
+      "name": "UR16e",
+      "dof": 6,
+      "exact_convergence_pct": 100.0,
+      "lbfgs_convergence_pct": 0.0,
+      "mean_iterations_exact": 12.6,
+      "mean_iterations_lbfgs": 50.0,
+      "iteration_reduction_pct": 74.799999998504,
+      "mean_time_exact_s": 0.41128336800145915,
+      "mean_time_lbfgs_s": 0.7805971399997361,
+      "mean_replay_rmse_rad": 0.17063244691827217,
+      "max_replay_rmse_rad": 0.2027501885986897
+    },
+    "kukaIiwa7": {
+      "name": "KUKA iiwa 7",
+      "dof": 7,
+      "exact_convergence_pct": 100.0,
+      "lbfgs_convergence_pct": 0.0,
+      "mean_iterations_exact": 16.24,
+      "mean_iterations_lbfgs": 50.0,
+      "iteration_reduction_pct": 67.51999999864961,
+      "mean_time_exact_s": 0.9020215360017028,
+      "mean_time_lbfgs_s": 1.1139874200010673,
+      "mean_replay_rmse_rad": 0.4462450541637713,
+      "max_replay_rmse_rad": 1.0771802191949031
+    }
+  },
+  "h3_verdict": {
+    "pass_convergence_threshold_95pct": true,
+    "pass_iteration_reduction_30pct": true,
+    "pass_dynamic_consistency_rmse_1e-2": false,
+    "overall_h3_supported": false
+  }
+}

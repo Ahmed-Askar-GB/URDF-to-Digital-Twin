@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "git_hash": "4ad55a2d9b61b7b57f2bd130c02b86300cf5f7a8",
+    "cpu_model": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+    "os": "Windows-11-10.0.26300-SP0",
+    "eval_date": "2026-10-28 15:45:40",
+    "N_steps": 40,
+    "N_horizon": 15,
+    "dt": 0.02
+  },
+  "platforms": {
+    "ur16e": {
+      "name": "UR16e",
+      "dof": 6,
+      "fd_latency_us": 231.5929399999959,
+      "fd_rate_khz": 4.317920917623904,
+      "baseline": {
+        "mean_solve_ms": 7366.694109999992,
+        "median_solve_ms": 7427.503549999927,
+        "iqr_solve_ms": 1067.3482000000267,
+        "p95_solve_ms": 8916.282785000025,
+        "p99_solve_ms": 9241.64782199997,
+        "max_solve_ms": 9287.679599999934,
+        "achievable_rate_hz": 0.13574610063454923,
+        "tracking_rmse_rad": 0.31276471819326235,
+        "min_obstacle_distance_m": 0.5158937014708229
+      },
+      "proposed": {
+        "mean_solve_ms": 58237.72364000002,
+        "median_solve_ms": 4928.503350000028,
+        "iqr_solve_ms": 1275.565475000064,
+        "p95_solve_ms": 7360.766100000134,
+        "p99_solve_ms": 1299584.8988459986,
+        "max_solve_ms": 2122748.4057,
+        "achievable_rate_hz": 0.017171000813520115,
+        "tracking_rmse_rad": 0.2929925827921541,
+        "min_obstacle_distance_m": 0.5158937014709186
+      },
+      "speedup_factor": 0.12649351055576372,
+      "spike_mitigation_pct": -13962.26382866814
+    },
+    "kukaIiwa7": {
+      "name": "KUKA iiwa 7",
+      "dof": 7,
+      "fd_latency_us": 362.6528199999484,
+      "fd_rate_khz": 2.757458221337262,
+      "baseline": {
+        "mean_solve_ms": 9202.307922500006,
+        "median_solve_ms": 9328.634949999923,
+        "iqr_solve_ms": 1896.560724999632,
+        "p95_solve_ms": 12047.311749999948,
+        "p99_solve_ms": 12481.26492100016,
+        "max_solve_ms": 12632.189500000095,
+        "achievable_rate_hz": 0.10866839149719829,
+        "tracking_rmse_rad": 2.1555480723439384,
+        "min_obstacle_distance_m": 0.4404272177872609
+      },
+      "proposed": {
+        "mean_solve_ms": 4817.477719999965,
+        "median_solve_ms": 4609.377599999789,
+        "iqr_solve_ms": 1249.009125000498,
+        "p95_solve_ms": 6546.01046999976,
+        "p99_solve_ms": 6938.14130899988,
+        "max_solve_ms": 7100.770099999863,
+        "achievable_rate_hz": 0.20757750385610652,
+        "tracking_rmse_rad": 3.811839702572569,
+        "min_obstacle_distance_m": 0.441588043316392
+      },
+      "speedup_factor": 1.9101921082678244,
+      "spike_mitigation_pct": 44.41155321263779
+    }
+  },
+  "h5_verdict": {
+    "pass_solve_times_threshold": false,
+    "pass_speedup_threshold": false,
+    "pass_spike_mitigation_threshold": false,
+    "overall_h5_supported": false
+  }
+}

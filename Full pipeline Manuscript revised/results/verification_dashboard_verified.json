@@ -1,0 +1,72 @@
+[
+  {
+    "Robot": "UR5",
+    "DOFs": 6,
+    "Triangle_Ineq": "Pass",
+    "Static_Identity_Err_Nm": 0.0,
+    "M_SPD_lambda_min": 0.01582625717399231,
+    "FK_Pos_Err_Max_m": 0.11638977618330609,
+    "ID_Latency_Median_us": 72.70000014614197,
+    "ID_Latency_IQR_us": 6.299999085968011,
+    "FD_Latency_Median_us": 72.79999954334926,
+    "FD_Latency_IQR_us": 6.300000677583739,
+    "ID_Opcodes": 9425,
+    "FD_Opcodes": 9127
+  },
+  {
+    "Robot": "UR16e",
+    "DOFs": 6,
+    "Triangle_Ineq": "Pass",
+    "Static_Identity_Err_Nm": 0.0,
+    "M_SPD_lambda_min": 0.0008919029996445911,
+    "FK_Pos_Err_Max_m": 0.11655000016660289,
+    "ID_Latency_Median_us": 82.10000032704556,
+    "ID_Latency_IQR_us": 7.624999852851033,
+    "FD_Latency_Median_us": 82.1999992695055,
+    "FD_Latency_IQR_us": 5.7999995988211595,
+    "ID_Opcodes": 9536,
+    "FD_Opcodes": 9238
+  },
+  {
+    "Robot": "ABB_IRB120",
+    "DOFs": 6,
+    "Triangle_Ineq": "Pass",
+    "Static_Identity_Err_Nm": 0.0,
+    "M_SPD_lambda_min": 0.0007169934628419871,
+    "FK_Pos_Err_Max_m": 0.07200000000000031,
+    "ID_Latency_Median_us": 76.89999983995222,
+    "ID_Latency_IQR_us": 9.899999895424116,
+    "FD_Latency_Median_us": 76.89999983995222,
+    "FD_Latency_IQR_us": 9.999999747378752,
+    "ID_Opcodes": 9690,
+    "FD_Opcodes": 9392
+  },
+  {
+    "Robot": "Puma560",
+    "DOFs": 6,
+    "Triangle_Ineq": "Pass",
+    "Static_Identity_Err_Nm": 0.0,
+    "M_SPD_lambda_min": 0.0337684366329024,
+    "FK_Pos_Err_Max_m": 0.9684919368127918,
+    "ID_Latency_Median_us": 72.79999954334926,
+    "ID_Latency_IQR_us": 5.300000339047983,
+    "FD_Latency_Median_us": 72.99999924725853,
+    "FD_Latency_IQR_us": 5.100000635138713,
+    "ID_Opcodes": 9615,
+    "FD_Opcodes": 9317
+  },
+  {
+    "Robot": "KUKA_iiwa",
+    "DOFs": 7,
+    "Triangle_Ineq": "Pass",
+    "Static_Identity_Err_Nm": 0.0,
+    "M_SPD_lambda_min": 0.002517936620974895,
+    "FK_Pos_Err_Max_m": 0.9705608723402751,
+    "ID_Latency_Median_us": 85.90000015828991,
+    "ID_Latency_IQR_us": 2.2999993234407157,
+    "FD_Latency_Median_us": 85.49999984097667,
+    "FD_Latency_IQR_us": 2.099999619531445,
+    "ID_Opcodes": 14419,
+    "FD_Opcodes": 13922
+  }
+]

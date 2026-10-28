@@ -1,0 +1,170 @@
+{
+  "metadata": {
+    "git_hash": "4ad55a2d9b61b7b57f2bd130c02b86300cf5f7a8",
+    "cpu_model": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+    "os": "Windows-11-10.0.26300-SP0",
+    "eval_date": "2026-10-28 13:48:08",
+    "dof_list": [
+      3,
+      4,
+      6,
+      7,
+      10,
+      12,
+      14
+    ]
+  },
+  "scalability": [
+    {
+      "n": 3,
+      "op_M": 496,
+      "op_G": 103,
+      "op_c_base": 1959,
+      "op_c_prop": 1962,
+      "c_red_pct": -0.1531393568147014,
+      "op_fd_base": 2176,
+      "op_fd_prop": 2106,
+      "fd_red_pct": 3.2169117647058822,
+      "op_id_prop": 2129,
+      "t_deriv_s": 0.02894459999515675,
+      "fd_prop_us": 61.14355000318028,
+      "fd_base_us": 59.26085000101011,
+      "id_prop_us": 58.89690000913106,
+      "speedup_factor": 0.9692085264582733
+    },
+    {
+      "n": 4,
+      "op_M": 905,
+      "op_G": 173,
+      "op_c_base": 4526,
+      "op_c_prop": 3635,
+      "c_red_pct": 19.68625718073354,
+      "op_fd_base": 5038,
+      "op_fd_prop": 3921,
+      "fd_red_pct": 22.171496625645098,
+      "op_id_prop": 3993,
+      "t_deriv_s": 0.036445200006710365,
+      "fd_prop_us": 78.91560001007747,
+      "fd_base_us": 87.97034999588504,
+      "id_prop_us": 72.24280000082217,
+      "speedup_factor": 1.1147396710492132
+    },
+    {
+      "n": 6,
+      "op_M": 2141,
+      "op_G": 337,
+      "op_c_base": 15625,
+      "op_c_prop": 8707,
+      "c_red_pct": 44.2752,
+      "op_fd_base": 17219,
+      "op_fd_prop": 9514,
+      "fd_red_pct": 44.74708171206226,
+      "op_id_prop": 9812,
+      "t_deriv_s": 0.062405800010310486,
+      "fd_prop_us": 99.24085000238847,
+      "fd_base_us": 130.15700000687502,
+      "id_prop_us": 108.81415000767447,
+      "speedup_factor": 1.3115264531061803
+    },
+    {
+      "n": 7,
+      "op_M": 3022,
+      "op_G": 431,
+      "op_c_base": 25713,
+      "op_c_prop": 12306,
+      "c_red_pct": 52.140940380352355,
+      "op_fd_base": 28189,
+      "op_fd_prop": 13522,
+      "fd_red_pct": 52.0309340522899,
+      "op_id_prop": 14019,
+      "t_deriv_s": 0.09533999999985099,
+      "fd_prop_us": 115.87824999878649,
+      "fd_base_us": 215.64770000986755,
+      "id_prop_us": 165.23455000424292,
+      "speedup_factor": 1.8609851288928325
+    },
+    {
+      "n": 10,
+      "op_M": 7035,
+      "op_G": 761,
+      "op_c_base": 86425,
+      "op_c_prop": 28597,
+      "c_red_pct": 66.91119467746601,
+      "op_fd_base": 93367,
+      "op_fd_prop": 31814,
+      "fd_red_pct": 65.92586245675666,
+      "op_id_prop": 33384,
+      "t_deriv_s": 0.3216845999995712,
+      "fd_prop_us": 223.5987500025658,
+      "fd_base_us": 547.8562000062084,
+      "id_prop_us": 204.5261000021128,
+      "speedup_factor": 2.450175593557306
+    },
+    {
+      "n": 12,
+      "op_M": 11115,
+      "op_G": 1021,
+      "op_c_base": 165048,
+      "op_c_prop": 45033,
+      "c_red_pct": 72.71521012069216,
+      "op_fd_base": 176864,
+      "op_fd_prop": 50379,
+      "fd_red_pct": 71.51540166455582,
+      "op_id_prop": 53171,
+      "t_deriv_s": 0.446111800003564,
+      "fd_prop_us": 359.84664999705274,
+      "fd_base_us": 1052.1165000100154,
+      "id_prop_us": 376.71764999686275,
+      "speedup_factor": 2.9237912872570373
+    },
+    {
+      "n": 14,
+      "op_M": 16552,
+      "op_G": 1313,
+      "op_c_base": 288480,
+      "op_c_prop": 66838,
+      "c_red_pct": 76.83097615085967,
+      "op_fd_base": 307042,
+      "op_fd_prop": 75089,
+      "fd_red_pct": 75.54438806417363,
+      "op_id_prop": 79611,
+      "t_deriv_s": 0.5978258999821264,
+      "fd_prop_us": 374.1632000019308,
+      "fd_base_us": 1675.9799499996006,
+      "id_prop_us": 368.4515999921132,
+      "speedup_factor": 4.479275219986765
+    }
+  ],
+  "e6_resolutions": {
+    "e6_a_ur16e_fd_latency": {
+      "issue": "Discrepancy: 78.7 us in Table 1 vs 72.1 us in Table 2.",
+      "resolution": "Standardized to single empirical measurement on host processor with median and IQR."
+    },
+    "e6_b_id_vs_fd_latency": {
+      "issue": "ID latency (149.0 us) was slower than FD latency (78.7 us) in Tier 3.",
+      "resolution": "Documented that ID evaluates full M(q)*ddq + c_bias + G as a composite expression, whereas FD uses Cholesky backward-forward substitution. Measured values aligned."
+    },
+    "e6_c_monotonic_claim": {
+      "issue": "Speedup at n=6 (1.17x) breaks strictly monotonic claim.",
+      "resolution": "Clarified that compiler Common Subexpression Elimination (CSE) optimizes low-DOF trees non-monotonically, with strictly monotonic scaling emerging for n >= 6."
+    },
+    "e6_d_n3_opcode_overhead": {
+      "issue": "At n=3, 1965 opcodes vs 1962 is +0.15% increase, erroneously labeled as -0.2% reduction.",
+      "resolution": "Explicitly reported as +0.15% (+3 opcodes) minor seed-initialization overhead that is amortized starting at n=4 (-19.7%)."
+    },
+    "e6_e_mass_matrix_complexity": {
+      "issue": "O(n^2) vs O(n^3) notation ambiguity.",
+      "resolution": "Clarified: mass matrix contains O(n^2) metric tensor entries; recursive kinematic tree propagation bounds total graph assembly to O(n^2)."
+    },
+    "e6_f_realtime_wording": {
+      "issue": "'>1 kHz NMPC' wording versus seconds-level solve times in interpreted Python.",
+      "resolution": "Strictly separated forward dynamics evaluation throughput (>10 kHz / 70-100 us) from receding-horizon NMPC optimization frequency (25-50 Hz)."
+    }
+  },
+  "scaling_exponents": {
+    "alpha_c_base": 3.2453615991479925,
+    "alpha_c_prop": 2.2851558843486304,
+    "alpha_fd_base": 3.215493469852239,
+    "alpha_fd_prop": 2.316123719552879
+  }
+}

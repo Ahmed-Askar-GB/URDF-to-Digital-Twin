@@ -1,0 +1,25 @@
+% NMPC Section Draft for Nature Scientific Reports
+
+\subsection*{Real-Time Nonlinear Model Predictive Control Benchmark on 6-DOF and 7-DOF Manipulators}
+
+While the open-loop multi-DOF scalability benchmark (Figure~\ref{fig:fig6_scalability_complexity} and Table~\ref{tab:table5_scalability}) rigorously confirms asymptotic opcode and runtime reductions up to $n=14$, evaluating optimal control frameworks mandates closed-loop receding-horizon validation under tight state/input constraints and real-time execution bounds. To definitively bridge our analytical framework with predictive control synthesis, we formulate and execute an empirical, closed-loop Nonlinear Model Predictive Control (NMPC) benchmark across two structurally distinct manipulators:
+\begin{enumerate}
+	\item \textbf{Universal Robots UR16e ($n=6$, Heavy Payload):} A 6-DOF industrial manipulator characterized by heavy proximal link masses ($27.26$~kg arm, $16.0$~kg payload capacity) subject to asymmetric actuator torque bounds ($\pm 150$~N$\cdot$m on proximal joints 1--3, $\pm 28$~N$\cdot$m on wrist joints 4--6);
+	\item \textbf{KUKA LBR iiwa 7 ($n=7$, Kinematically Redundant):} A 7-DOF redundant collaborative manipulator featuring alternating skew-orthogonal joint axes ($d_1=0.34$, $d_3=0.40$, $d_5=0.40$, $d_7=0.045$~m; all $\alpha_{1..6}=-\pi/2$, $\alpha_7=0$) subject to torque limits ($\pm 176$~N$\cdot$m on joints 1--2, $\pm 110$~N$\cdot$m on joints 3--5, and $\pm 40$~N$\cdot$m on joints 6--7).
+\end{enumerate}
+
+\noindent\textbf{Receding-Horizon Problem Formulation:} 
+Each robot tracks an aggressive multi-harmonic sinusoidal posture trajectory $\bm{q}_d(t)$ while simultaneously avoiding a non-convex spherical Cartesian obstacle ($\|\bm{p}_{\text{ee}}(\bm{q}) - \bm{p}_{\text{obs}}\|_2 \ge r_{\text{obs}} + d_{\text{safe}}$) placed directly within the end-effector workspace. The continuous-time optimal control problem (Eqs.~\eqref{eq:nmpc_ocp}--\eqref{eq:nmpc_bounds}) is transcribed via direct multiple shooting over $N=15$ intervals with discretization step $\Delta t = 0.02$~s (prediction horizon $T_h = 0.30$~s) and 4th-order Runge--Kutta integration. The resulting structured Non-Linear Program (NLP) is solved online at each sampling instant using IPOPT warm-started across receding horizons.
+
+Two dynamic implementations are compared under identical cost matrices ($\bm{Q} = \operatorname{diag}(200\bm{I}_n, 10\bm{I}_n)$, $\bm{R} = 0.005\bm{I}_n$, $\bm{P} = 2\bm{Q}$) and initial conditions:
+\begin{itemize}
+	\item \textbf{Baseline Formulation:} Evaluates Coriolis forces via classical Christoffel symbol tensors ($\bm{C}(\bm{q},\dot{\bm{q}})\dot{\bm{q}}$) and resolves forward accelerations via explicit symbolic matrix inversion ($\ddot{\bm{q}} = \bm{M}(\bm{q})^{-1}(\bm{\tau} - \bm{C}\dot{\bm{q}} - \bm{G})$);
+	\item \textbf{Proposed Formulation:} Evaluates Coriolis bias directly via the generalized momentum directional derivative ($\mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}})$ from Eq.~\eqref{eq:cbias_exact}) and resolves forward accelerations via pivot-free symbolic Cholesky factorization ($\bm{M} = \bm{R}^T\bm{R}$ from Proposition~\ref{prop:cholesky}).
+\end{itemize}
+
+\begin{figure*}[!t]
+	\centering
+	\includegraphics[width=\textwidth]{fig7_nmpc_benchmark.pdf}
+	\caption{\textbf{Empirical Closed-Loop Nonlinear Model Predictive Control (NMPC) Benchmark with Obstacle Avoidance across 6-DOF and 7-DOF Manipulators.} (a) Receding-horizon NLP solve time per sampling step $k$ on the UR16e ($n=6$, $N=15$ intervals, $\Delta t = 20$~ms), comparing the classical Christoffel + Inversion baseline (crimson dotted) against the proposed Momentum + Cholesky formulation (blue solid). (b) Per-step solve time on the kinematically redundant KUKA LBR iiwa 7 ($n=7$), demonstrating consistent per-step acceleration. (c) Summary bar chart of mean NLP solve times and achievable closed-loop control frequencies across both platforms. (d) Closed-loop Cartesian end-effector distance $d(t) = \|\bm{p}_{\text{ee}}(t) - \bm{p}_{\text{obs}}\|_2$ to the obstacle (green curve) on the KUKA iiwa, strictly respecting the safety boundary $r_{\text{obs}} + d_{\text{safe}} = 0.16$~m (crimson dashed boundary) with non-negative clearance margin throughout the trajectory.}
+	\label{fig:fig7_nmpc_benchmark}
+\end{figure*}

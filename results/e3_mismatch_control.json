@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "git_hash": "4ad55a2d9b61b7b57f2bd130c02b86300cf5f7a8",
+    "cpu_model": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+    "robot": "UR16e",
+    "dof": 6,
+    "T_total": 5.0,
+    "dt": 0.001,
+    "N_steps": 5000,
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51
+    ]
+  },
+  "levels": {
+    "level_0": {
+      "name": "Level 0: Nominal (0%)",
+      "mean_rmse_ctc_rad": 0.015520454999799316,
+      "std_rmse_ctc_rad": 0.0,
+      "mean_rmse_pdg_rad": 0.7077775883198303,
+      "mean_rmse_pid_rad": 0.78414572948357,
+      "std_rmse_pid_rad": 0.0,
+      "error_reduction_pct": 98.02071803540639,
+      "mean_effort_ctc": 42898.285565656304,
+      "mean_effort_pid": 507917.9029376035,
+      "all_runs_stable": true
+    },
+    "level_1": {
+      "name": "Level 1: +-10% Mass/Inertia",
+      "mean_rmse_ctc_rad": 0.08424128815588756,
+      "std_rmse_ctc_rad": 0.0008000593685194031,
+      "mean_rmse_pdg_rad": 0.24333224705390494,
+      "mean_rmse_pid_rad": 0.263556577962687,
+      "std_rmse_pid_rad": 0.024290151038749853,
+      "error_reduction_pct": 68.03673472804994,
+      "mean_effort_ctc": 43525.50483664086,
+      "mean_effort_pid": 369671.2901405435,
+      "all_runs_stable": true
+    },
+    "level_2": {
+      "name": "Level 2: +-20% Mass/Inertia",
+      "mean_rmse_ctc_rad": 0.10796314746363438,
+      "std_rmse_ctc_rad": 0.0014974638036864836,
+      "mean_rmse_pdg_rad": 0.15579768902247643,
+      "mean_rmse_pid_rad": 0.18327218337465237,
+      "std_rmse_pid_rad": 0.009278937974138986,
+      "error_reduction_pct": 41.09136177914585,
+      "mean_effort_ctc": 44187.741611149104,
+      "mean_effort_pid": 339813.34092771955,
+      "all_runs_stable": true
+    },
+    "level_3": {
+      "name": "Level 3: +-20% + 5kg Payload Step",
+      "mean_rmse_ctc_rad": 0.262934188522415,
+      "std_rmse_ctc_rad": 0.004944432095683947,
+      "mean_rmse_pdg_rad": 0.14286693269484735,
+      "mean_rmse_pid_rad": 0.18678774899208644,
+      "std_rmse_pid_rad": 0.0035914576188282254,
+      "error_reduction_pct": -40.76629219058399,
+      "mean_effort_ctc": 92206.30896983891,
+      "mean_effort_pid": 342779.81176000566,
+      "all_runs_stable": true
+    }
+  },
+  "h4_verdict": {
+    "pass_nominal_rmse_0_005": false,
+    "pass_severe_mismatch_rmse_0_035": false,
+    "overall_h4_supported": false
+  }
+}

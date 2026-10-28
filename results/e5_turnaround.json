@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "git_hash": "4ad55a2d9b61b7b57f2bd130c02b86300cf5f7a8",
+    "cpu_model": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+    "os": "Windows-11-10.0.26300-SP0",
+    "eval_date": "2026-10-28 13:47:55",
+    "N_runs": 5
+  },
+  "robots": {
+    "ur5": {
+      "name": "Universal Robots UR5",
+      "dof": 6,
+      "t_parse_ms": 1.7091999936383218,
+      "t_dh_ms": 0.9636799979489297,
+      "t_inertia_ms": 0.2717600029427558,
+      "t_dyn_s": 0.05114730001660064,
+      "t_codegen_s": 0.11430335999466479,
+      "t_control_ms": 48.14695999957621,
+      "total_turnaround_s": 0.21654555999557487,
+      "total_turnaround_std_s": 0.016471085024499822,
+      "manual_overrides_required": 0
+    },
+    "ur16e": {
+      "name": "Universal Robots UR16e",
+      "dof": 6,
+      "t_parse_ms": 1.9610800081864,
+      "t_dh_ms": 1.1872599949128926,
+      "t_inertia_ms": 0.304459995822981,
+      "t_dyn_s": 0.06550388000323437,
+      "t_codegen_s": 0.14599951999844052,
+      "t_control_ms": 58.39368000160903,
+      "total_turnaround_s": 0.2733529400080442,
+      "total_turnaround_std_s": 0.02453792932064695,
+      "manual_overrides_required": 0
+    },
+    "kukaIiwa7": {
+      "name": "KUKA LBR iiwa 7",
+      "dof": 7,
+      "t_parse_ms": 2.927960001397878,
+      "t_dh_ms": 2.0166199887171388,
+      "t_inertia_ms": 0.39185999776236713,
+      "t_dyn_s": 0.11571664000512101,
+      "t_codegen_s": 0.2781828800041694,
+      "t_control_ms": 59.92301999940537,
+      "total_turnaround_s": 0.4591629600094166,
+      "total_turnaround_std_s": 0.07181981740495735,
+      "manual_overrides_required": 0
+    },
+    "puma560_robot": {
+      "name": "Unimation Puma 560",
+      "dof": 6,
+      "t_parse_ms": 3.7073199928272516,
+      "t_dh_ms": 1.928439998300746,
+      "t_inertia_ms": 4.332920006709173,
+      "t_dyn_s": 0.05728790001012385,
+      "t_codegen_s": 0.012791439995635302,
+      "t_control_ms": 48.319599992828444,
+      "total_turnaround_s": 0.12837123998906463,
+      "total_turnaround_std_s": 0.033686203518350555,
+      "manual_overrides_required": 0
+    },
+    "abbIrb120": {
+      "name": "ABB IRB 120",
+      "dof": 6,
+      "t_parse_ms": 1.60370001103729,
+      "t_dh_ms": 1.80989999207668,
+      "t_inertia_ms": 0.2442200027871877,
+      "t_dyn_s": 0.058403099997667594,
+      "t_codegen_s": 0.01368399999337271,
+      "t_control_ms": 50.55877999402583,
+      "total_turnaround_s": 0.1263071600056719,
+      "total_turnaround_std_s": 0.009122302065138671,
+      "manual_overrides_required": 0
+    }
+  },
+  "h6_verdict": {
+    "pass_under_3_minutes": true,
+    "pass_zero_manual_overrides": true,
+    "overall_h6_supported": true
+  }
+}

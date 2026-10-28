@@ -1,0 +1,109 @@
+{
+  "metadata": {
+    "git_hash": "4ad55a2d9b61b7b57f2bd130c02b86300cf5f7a8",
+    "cpu_model": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+    "os": "Windows-11-10.0.26300-SP0",
+    "python_version": "3.12.10",
+    "casadi_version": "3.7.2",
+    "mujoco_version": "3.10.0",
+    "eval_date": "2026-10-28 13:44:40",
+    "seed": 42
+  },
+  "h1_precision": {
+    "ur5": {
+      "robot": "UR5",
+      "dof": 6,
+      "err_prop_max": 2.309507917590617e-09,
+      "rel_prop_max": 2.3092234501504342e-09,
+      "err_mujoco_fd_max": 0.05771302131869388,
+      "rel_mujoco_fd_max": 0.057705912671424636,
+      "h1_pass_prop_exact": true,
+      "h1_pass_mj_fd_truncation": true,
+      "exact_hessian_available": true
+    },
+    "ur16e": {
+      "robot": "UR16e",
+      "dof": 6,
+      "err_prop_max": 1.5268619219226814e-08,
+      "rel_prop_max": 1.5262603029301376e-08,
+      "err_mujoco_fd_max": 0.26550355489536054,
+      "rel_mujoco_fd_max": 0.26539894033615696,
+      "h1_pass_prop_exact": true,
+      "h1_pass_mj_fd_truncation": true,
+      "exact_hessian_available": true
+    },
+    "kukaIiwa7": {
+      "robot": "KUKA iiwa 7",
+      "dof": 7,
+      "err_prop_max": 1.023368008878315e-09,
+      "rel_prop_max": 1.0229391185439863e-09,
+      "err_mujoco_fd_max": 0.6887985029506147,
+      "rel_mujoco_fd_max": 0.688509829776681,
+      "h1_pass_prop_exact": true,
+      "h1_pass_mj_fd_truncation": true,
+      "exact_hessian_available": true
+    }
+  },
+  "h2_scaling": {
+    "ur5": {
+      "robot": "UR5",
+      "dof": 6,
+      "latency_prop_us": 5060.258500016062,
+      "latency_mujoco_fd_us": 150.10500006610528,
+      "ratio_prop_to_mj": 33.711458630650846,
+      "h2_pass_faster_at_6_7": false
+    },
+    "ur16e": {
+      "robot": "UR16e",
+      "dof": 6,
+      "latency_prop_us": 4697.174000029918,
+      "latency_mujoco_fd_us": 163.15200002281927,
+      "ratio_prop_to_mj": 28.790171124743537,
+      "h2_pass_faster_at_6_7": false
+    },
+    "kukaIiwa7": {
+      "robot": "KUKA iiwa 7",
+      "dof": 7,
+      "latency_prop_us": 8092.691999918316,
+      "latency_mujoco_fd_us": 271.0490000026766,
+      "ratio_prop_to_mj": 29.856933616462495,
+      "h2_pass_faster_at_6_7": false
+    }
+  },
+  "capability_matrix": {
+    "headers": [
+      "Framework",
+      "Continuous Jacobians",
+      "Discrete RK4 Jacobians",
+      "Exact Hessian",
+      "Symbolic CSE",
+      "Embedded C Export"
+    ],
+    "rows": [
+      [
+        "MuJoCo Physics",
+        "Finite Differences",
+        "Finite Differences (mjd)",
+        "No",
+        "No",
+        "C Runtime"
+      ],
+      [
+        "Pinocchio",
+        "Analytical (ABA/RNEA)",
+        "Semi-analytical / CasADi",
+        "Via CasADi binding",
+        "Yes",
+        "C++ / Python"
+      ],
+      [
+        "Proposed Pipeline",
+        "Exact Closed-Form AD",
+        "Exact Symbolic RK4 AD",
+        "Yes (Exact Lagrangian)",
+        "Yes (Full DAG)",
+        "Yes (ANSI C & DLL)"
+      ]
+    ]
+  }
+}

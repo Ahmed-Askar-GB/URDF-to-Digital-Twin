@@ -1,0 +1,22 @@
+{
+  "Christoffel_Inverse": {
+    "opcodes": 16775,
+    "latency_median_us": 96.89999933470972,
+    "latency_iqr_us": 1.2999998943996616
+  },
+  "Christoffel_Solve": {
+    "opcodes": 16595,
+    "latency_median_us": 112.5999997384497,
+    "latency_iqr_us": 3.4250003864144674
+  },
+  "Momentum_Inverse": {
+    "opcodes": 10205,
+    "latency_median_us": 79.3999997767969,
+    "latency_iqr_us": 3.525000920490129
+  },
+  "Momentum_Cholesky": {
+    "opcodes": 9238,
+    "latency_median_us": 76.39999967068434,
+    "latency_iqr_us": 8.50000014906982
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "UR5": {
+    "n": 6,
+    "triangle_ineq": true,
+    "min_eig_M": 0.01582625717399231,
+    "static_identity_err_max": 0.0,
+    "id_latency_us_median": 70.79999977577245,
+    "id_latency_us_iqr": 2.3999994027690263,
+    "fd_latency_us_median": 70.79999977577245,
+    "fd_latency_us_iqr": 2.0250006400601706,
+    "tau_opcodes": 9425,
+    "fd_opcodes": 9127
+  },
+  "UR16e": {
+    "n": 6,
+    "triangle_ineq": true,
+    "min_eig_M": 0.0008919029996445911,
+    "static_identity_err_max": 0.0,
+    "id_latency_us_median": 81.29999969241908,
+    "id_latency_us_iqr": 5.000000783184078,
+    "fd_latency_us_median": 81.40000045386842,
+    "fd_latency_us_iqr": 4.999999873689376,
+    "tau_opcodes": 9536,
+    "fd_opcodes": 9238
+  },
+  "ABB_IRB120": {
+    "n": 6,
+    "triangle_ineq": true,
+    "min_eig_M": 0.0007169934628419871,
+    "static_identity_err_max": 0.0,
+    "id_latency_us_median": 75.30000038968865,
+    "id_latency_us_iqr": 11.099999028374441,
+    "fd_latency_us_median": 75.64999987152987,
+    "fd_latency_us_iqr": 11.099999937869143,
+    "tau_opcodes": 9690,
+    "fd_opcodes": 9392
+  },
+  "Puma560": {
+    "n": 6,
+    "triangle_ineq": true,
+    "min_eig_M": 0.0337684366329024,
+    "static_identity_err_max": 0.0,
+    "id_latency_us_median": 71.59999950090423,
+    "id_latency_us_iqr": 1.7999991541728377,
+    "fd_latency_us_median": 71.69999980760622,
+    "fd_latency_us_iqr": 1.6000012692529708,
+    "tau_opcodes": 9615,
+    "fd_opcodes": 9317
+  },
+  "KUKA_iiwa": {
+    "n": 7,
+    "triangle_ineq": true,
+    "min_eig_M": 0.002517936620974895,
+    "static_identity_err_max": 0.0,
+    "id_latency_us_median": 94.1500002227258,
+    "id_latency_us_iqr": 13.024999816479976,
+    "fd_latency_us_median": 93.90000013809185,
+    "fd_latency_us_iqr": 12.725000942737097,
+    "tau_opcodes": 14419,
+    "fd_opcodes": 13922
+  }
+}

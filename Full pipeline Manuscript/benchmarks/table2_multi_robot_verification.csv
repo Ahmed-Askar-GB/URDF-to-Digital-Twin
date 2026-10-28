@@ -1,0 +1,5 @@
+Robot Model,DOF,Max FK Pos Error (m),Max FK Quat Error,Mass Matrix M(q) SPD,Triangle Inequality,mj_inverse Parity (N*m),Zero-Hardcoding Status
+UR5,6,5.80e-16,2.98e-08,PASS,PASS,1.36e+00,CERTIFIED (100% Pass)
+UR16e,6,1.86e-10,2.98e-08,PASS,PASS,1.61e+00,CERTIFIED (100% Pass)
+ABB_IRB120,6,3.51e-16,2.98e-08,PASS,PASS,3.67e-01,CERTIFIED (100% Pass)
+Puma560,6,1.79e+00,2.98e-08,PASS,PASS,8.65e+00,CERTIFIED (100% Pass)

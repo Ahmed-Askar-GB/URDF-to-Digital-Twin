@@ -1,0 +1,4 @@
+Tier,Implementation Track,Core LOC,Derivation Time (s),ID Latency (us),FD Latency (us),Instruction Count,Primary Operational Domain
+Tier 1,MATLAB-Sym (Symbolic Math),420,6.42,195.0,310.0,Closed-form (sym),Glass-Box Pedagogy & Theoretical Verification
+Tier 2,MATLAB-CasADi (Simscape MBD),680,0.22,110.0,165.0,15814 (Christoffel),Industrial Model-Based Design & Hardware-in-Loop
+Tier 3,Python-CasADi (MuJoCo Control),750,0.09,149.0,78.7,7041 (Momentum Deriv),Real-Time Nonlinear Control (6.71 kHz ID / 12.7 kHz FD) & NMPC

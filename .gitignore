@@ -39,14 +39,36 @@ codegen/
 *.sbproj.backup
 *.sbproj.bak
 
+# Local Developer Tools & Binaries
+tools/
+w64devkit/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
 # LaTeX auxiliary files
 *.aux
 *.log
+*.bbl
+*.blg
 *.out
-*.toc
 *.synctex.gz
+*.toc
+*.fls
+*.fdb_latexmk
 
-# Huge generated files and large local data caches
-tau_sym.txt
-*.mat
-*.original
+# Local scratch and simulator logs
+scratch/
+MUJOCO_LOG.TXT
+
+# Large binary literature PDFs in root
+/*.pdf
+!Full pipeline Manuscript revised/*.pdf
+!Full pipeline Manuscript/*.pdf
+*.zip
+*.docx
+
+
