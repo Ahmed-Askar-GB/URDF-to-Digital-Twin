@@ -34,7 +34,7 @@
 	urlcolor=blue
 }
 
-\title{\textbf{Extending Multibody Simulation: Closed-Form Dynamics from URDF Models for Model-Based Control and Trajectory Optimization of Serial Manipulators}}
+\title{\textbf{Extending Multibody Simulation with CADENCE: Closed-Form Dynamics from URDF Models for Model-Based Control and Trajectory Optimization of Serial Manipulators}}
 
 \author[1,2]{Ahmed Askar}
 
@@ -48,7 +48,7 @@
 	\maketitle
 	
 	\begin{abstract}
-		Multibody simulators based on the Unified Robot Description Format (URDF) predict robot motion accurately but keep their equations of motion implicit, which limits model-based control and trajectory optimization. We present an automated pipeline that extends such simulators with closed-form, differentiable dynamics generated directly from URDF models of serial manipulators. The pipeline synthesizes Denavit--Hartenberg parameters, resolving frame ambiguities, projects corrupted CAD inertia tensors onto the physically realizable set, and computes Coriolis and centrifugal terms as a directional derivative of the generalized momentum, with cost bounded by a constant multiple of the mass-matrix cost. Forward dynamics uses symbolic Cholesky factorization instead of matrix inversion. Across chains of 3 to 14 degrees of freedom, graph size scales as $\mathcal{O}(n^{2.29})$ rather than $\mathcal{O}(n^{3.25})$ for Christoffel expansions, cutting forward-dynamics instructions by $55.4\%$ for a 6-DOF arm and $75.5\%$ at 14 DOF. Models of four industrial manipulators agree with MuJoCo and Simscape, and compiled C forward dynamics runs in $78.7~\mu$s. The exact derivatives enable constrained trajectory optimization, converging on all 15 test problems per robot (100\% convergence in 7.9--15.6 iterations, reducing iterations by 95.6\%--96.8\% and accelerating solve time up to 14.39$\times$ over Quasi-Newton L-BFGS), and computed-torque control that maintains robust tracking under moderate parameter mismatch, while large unmodeled payloads motivate adaptive parameter calibration.
+		Multibody simulators based on the Unified Robot Description Format (URDF) predict robot motion accurately but keep their equations of motion implicit, which limits model-based control and trajectory optimization. We present CADENCE (Closed-form Analytical Dynamics Extraction for Nonlinear Control Extension), an automated pipeline that extends such simulators with closed-form, differentiable dynamics generated directly from URDF models of serial manipulators. The pipeline synthesizes Denavit--Hartenberg parameters, resolving frame ambiguities, projects corrupted CAD inertia tensors onto the physically realizable set, and computes Coriolis and centrifugal terms as a directional derivative of the generalized momentum, with cost bounded by a constant multiple of the mass-matrix cost. Forward dynamics uses symbolic Cholesky factorization instead of matrix inversion. Across chains of 3 to 14 degrees of freedom, graph size scales as $\mathcal{O}(n^{2.29})$ rather than $\mathcal{O}(n^{3.25})$ for Christoffel expansions, cutting forward-dynamics instructions by $55.4\%$ for a 6-DOF arm and $75.5\%$ at 14 DOF. Models of four industrial manipulators agree with MuJoCo and Simscape, and compiled C forward dynamics runs in $78.7~\mu$s. The exact derivatives enable constrained trajectory optimization, converging on all 15 test problems per robot (100\% convergence in 7.9--15.6 iterations, reducing iterations by 95.6\%--96.8\% and accelerating solve time up to 14.39$\times$ over Quasi-Newton L-BFGS), and computed-torque control that maintains robust tracking under moderate parameter mismatch, while large unmodeled payloads motivate adaptive parameter calibration.
 		
 	\end{abstract}
 	
@@ -68,86 +68,112 @@ The demand for explicit analytical models is further amplified by the emergence 
 
 Existing solutions address only part of this need. Available URDF conversion tools either rely on auxiliary dummy frames, fail on general branched trees, or stop at kinematics without propagating inertial properties into the synthesized DH frames \cite{trzy2020urdf, cursi2021urdfgen, ihab2026urdf2dt}. A general framework that transforms industrial CAD and URDF descriptions into explicit and physically consistent analytical dynamic models therefore remains largely unavailable \cite{tola2024understanding, ihab2026urdf2dt}. Three technical obstacles explain this gap. First, a URDF joint is an unconstrained six-degree-of-freedom transformation referenced to arbitrary CAD origins, whereas the DH convention imposes two strict geometric rules on the frame assignment and leaves it non-unique whenever consecutive joint axes are parallel or collinear \cite{craig2005introduction, yu2024unified, ihab2026urdf2dt}. Second, link masses, centers of mass, and inertia tensors are defined relative to CAD link origins and must be transformed exactly into the DH frames; moreover, CAD-derived and historical inertia tensors frequently violate rigid-body realizability, that is, positive definiteness and the triangle inequality on the principal moments \cite{sousa2019physical, tola2024understanding, asker2024physics}, which causes numerical breakdowns in dynamic simulation. Third, deriving closed-form Euler--Lagrange equations with computer algebra suffers from severe expression swell: forming the $n^3$ Christoffel symbols and symbolically inverting the mass matrix generate expressions that grow rapidly beyond six degrees of freedom and preclude real-time execution. Recursive spatial-vector libraries avoid this swell through procedural C/C++ routines, but they do not expose compressed, DH-consistent symbolic graphs across the MATLAB, Simulink, and Python ecosystems \cite{carpentier2019pinocchio}.
 
-This paper addresses these obstacles with a deterministic, fully automated framework that converts raw, uncalibrated industrial URDF models into physically consistent, closed-form analytical dynamic models (Figure~\ref{fig:fig1_architecture}). The aim is to extend multibody simulation, not to replace it: the generated models are verified against established physics engines and operate alongside them, so that a single URDF description serves both as the simulated plant and as the source of the equations needed for model-based control, trajectory optimization, and digital-twin calibration. The framework synthesizes DH-consistent kinematic descriptions, propagates and validates the inertial properties, derives the closed-form Euler--Lagrange equations of motion, and reformulates the dynamic computations through algorithmic differentiation to overcome the scalability limits traditionally associated with symbolic robot dynamics. We test the hypothesis that the combinatorial growth which has restricted closed-form Lagrangian mechanics to low-dimensional manipulators is not intrinsic to analytical mechanics, but an artifact of the Christoffel-tensor formulation, and that removing it reduces the cost of the sensitivity evaluations that dominate gradient-based trajectory optimization, including its receding-horizon form, nonlinear model predictive control (NMPC), and calibration. We focus on serial manipulators, the dominant class of industrial robots and the backbone of manufacturing, assembly, and material-handling tasks; the underlying principles of automated model extraction, inertial parameter propagation, and differentiable symbolic dynamics provide a foundation for future extension to mobile manipulators, legged systems, humanoid robots, and hybrid kinematic structures.
+This paper addresses these obstacles with CADENCE (Closed-form Analytical Dynamics Extraction for Nonlinear Control Extension), a deterministic, fully automated framework that converts raw, uncalibrated industrial URDF models into physically consistent, closed-form analytical dynamic models (Figure~\ref{fig:fig1_architecture}). The aim is to extend multibody simulation, not to replace it: the generated models are verified against established physics engines and operate alongside them, so that a single URDF description serves both as the simulated plant and as the source of the equations needed for model-based control, trajectory optimization, and digital-twin calibration. The framework synthesizes DH-consistent kinematic descriptions, propagates and validates the inertial properties, derives the closed-form Euler--Lagrange equations of motion, and reformulates the dynamic computations through algorithmic differentiation to overcome the scalability limits traditionally associated with symbolic robot dynamics. We test the hypothesis that the combinatorial growth which has restricted closed-form Lagrangian mechanics to low-dimensional manipulators is not intrinsic to analytical mechanics, but an artifact of the Christoffel-tensor formulation, and that removing it reduces the cost of the sensitivity evaluations that dominate gradient-based trajectory optimization, including its receding-horizon form, nonlinear model predictive control (NMPC), and calibration. We focus on serial manipulators, the dominant class of industrial robots and the backbone of manufacturing, assembly, and material-handling tasks; the underlying principles of automated model extraction, inertial parameter propagation, and differentiable symbolic dynamics provide a foundation for future extension to mobile manipulators, legged systems, humanoid robots, and hybrid kinematic structures.
 
 The main contributions of this paper are as follows:
+\begin{itemize}
+	\item \textbf{Automated Kinematic and Inertial Synthesis:} An automated framework that extracts DH parameters from a URDF file while resolving the arbitrary frame assignments inherent in URDF descriptions.
+	\item \textbf{Momentum-Based Computation of Coriolis and Centrifugal Terms:} A generalized-momentum-based formulation that eliminates the expression growth of the Christoffel-symbol approach while preserving mathematical equivalence, passivity, and computational complexity comparable to mass matrix evaluation.
+	\item \textbf{Inverse-Free Forward Dynamics:} A symbolic factorization-based solution that exploits the positive definiteness of the mass matrix to avoid explicit inversion and produce compact, differentiable expressions for numerical optimization.
+	\item \textbf{Extending Simulation with Model-Based Control and Optimization:} A demonstration that the generated models provide exact derivatives for trajectory optimization and model-based control, including predictive control under actuator and obstacle constraints.
+	\item \textbf{Multi-Platform Deployment and Verification:} A unified model representation deployed across symbolic MATLAB and compiled C implementations and automatically verified against MuJoCo and Simscape on four industrial manipulators.
+\end{itemize}
+
+\subsection*{The CADENCE Pipeline Architecture and Workflow}
+
+To bridge the gap between simulation-oriented robot descriptions and model-based control synthesis, we develop \textbf{CADENCE} (\textbf{C}losed-form \textbf{A}nalytical \textbf{D}ynamics \textbf{E}xtraction for \textbf{N}onlinear \textbf{C}ontrol \textbf{E}xtension), an automated, end-to-end computational pipeline that ingests uncalibrated industrial robot descriptions and emits exact, differentiable dynamic models. As illustrated in Figure~\ref{fig:fig1_architecture}, CADENCE is structured into three consecutive computational stages:
 \begin{enumerate}
-	\item \textbf{Automated Kinematic and Inertial Synthesis:} We present a geometric synthesis pipeline that maps arbitrary URDF joint trees to minimal DH parameters through a four-regime classification that resolves gauge ambiguities, together with a projection of link inertia tensors onto the physically realizable set that guarantees rigid-body realizability.
-	\item \textbf{Momentum-Based Coriolis Formulation:} We formulate an exact directional-derivative expression for the Coriolis and centrifugal bias vector as the derivative of the generalized momentum. We establish its equivalence to the classical Christoffel formulation and its preservation of the skew-symmetric passivity property ($\dot{\bm{M}} - 2\bm{C}$), demonstrating that its evaluation cost is bounded by a constant multiple of the mass matrix cost.
-	\item \textbf{Forward Dynamics via Symbolic Cholesky Factorization:} Exploiting the guaranteed positive definiteness of the sanitized models, we construct a pivot-free symbolic Cholesky solver that avoids symbolic matrix inversion. Together with the momentum formulation, it reduces the forward dynamics instruction count by $55.4\%$ on a 6-DOF arm and by up to $75.5\%$ on 14-DOF chains, and it reduces the dynamics-sensitivity cost of NMPC by $40.6\%$ to $48.2\%$.
-	\item \textbf{Multi-Platform Industrial Validation:} We demonstrate the end-to-end framework on four industrial manipulators (UR5, UR16e, ABB IRB 120, and Puma 560), verifying agreement with established physics engines (MuJoCo, Simscape) through an automated five-stage verification procedure, and we show its deployment in computed torque control and in receding-horizon NMPC with obstacle and torque constraints, a trajectory optimization problem solved at every control step, through three software tiers that range from symbolic MATLAB expressions to compiled C code.
+	\item \textbf{Inputs to CADENCE:} The pipeline takes as input a standard URDF XML file, which defines the robot as an unconstrained tree of links and joints with arbitrary CAD-derived reference origins, unaligned coordinate orientations, manufacturer-specific actuation signs, and raw (potentially unphysical) inertia tensors. For control and trajectory optimization, task-level specifications are additionally provided, including joint position and velocity limits $[\bm{x}_{\min}, \bm{x}_{\max}]$, actuation torque bounds $[\bm{u}_{\min}, \bm{u}_{\max}]$, end-effector reference trajectories $\bm{x}_{\text{ref}}(t)$, and geometric obstacle coordinates $(\bm{p}_{\text{obs}}, r_{\text{obs}})$.
+	\item \textbf{Core Model Extraction and Dynamics Engine:} CADENCE parses the topological tree into an active serial chain, contractively absorbing intermediate fixed links. It then synthesizes standard DH parameters through an exhaustive four-case geometric classification (Case~1: general skew, Case~2: intersecting, Case~3: parallel, and Case~4: collinear axes) while automatically identifying the joint-axis actuation parity vector $\bm{S} \in \{-1, +1\}^n$. Link inertia tensors are mapped to the synthesized DH frames and projected onto the physically realizable set, enforcing positive definiteness and the rigid-body triangle inequality. The sanitized kinematic and inertial parameters are then assembled into the closed-form mass metric $\bm{M}(\bm{q})$ and gravitational vector $\bm{G}(\bm{q})$. Velocity-dependent Coriolis and centrifugal effects are derived as an exact directional derivative of the generalized momentum, $\bm{c}_{\mathrm{bias}}(\bm{q},\dot{\bm{q}}) = \left(\frac{\partial (\bm{M}\dot{\bm{q}})}{\partial \bm{q}}\right)\dot{\bm{q}} - \frac{1}{2}\nabla_{\bm{q}}(\dot{\bm{q}}^T\bm{M}\dot{\bm{q}})$, bypassing the combinatorial explosion of $n^3$ Christoffel symbols. Finally, forward dynamics are resolved via symbolic Cholesky factorization $\bm{M}(\bm{q}) = \bm{R}(\bm{q})^T\bm{R}(\bm{q})$ without explicit matrix inversion.
+	\item \textbf{Outputs and Multi-Environment Deployment:} CADENCE outputs: (i) differentiable symbolic CasADi computation graphs and self-contained, heap-free ANSI C99 source code for forward and inverse dynamics along with exact state-transition Jacobians $\bm{A}_k, \bm{B}_k$ and second-order Lagrangian Hessians $\nabla_{\bm{w}\bm{w}}^2 \mathcal{L}$; (ii) native executable models deployed across three execution environments---\texttt{MATLAB-Sym} for transparent algebraic inspection and Lyapunov proofs, \texttt{MATLAB-CasADi} for Simscape Multibody co-simulation and Model-Based Design, and \texttt{Python-MuJoCo} for high-rate servo rollouts ($>10$~kHz), Computed Torque Control (CTC), offline trajectory optimization, and receding-horizon NMPC; and (iii) automated certificates generated by an integrated five-stage verification procedure confirming kinematic, dynamic, and simulator parity.
 \end{enumerate}
 
-The remainder of the paper is organized as follows. The next three sections detail the analytical framework for kinematic and dynamic synthesis, the optimal control and software implementation across three tiers, and the multi-stage verification protocol. The Results section then presents the derivative benchmark, morphological verification, multi-DOF scalability, trajectory optimization, and closed-loop control experiments on physics engines under parametric mismatch. Finally, the Discussion evaluates the framework relative to numerical simulators and recursive algorithms, highlighting practical implications for receding-horizon control and robotics education, followed by concluding remarks.
+The remainder of the paper is organized as follows. Section~\ref{sec:methodology} presents the analytical methodology of CADENCE, detailing DH synthesis across the four geometric cases, inertia sanitization, momentum-based Coriolis evaluation, and symbolic Cholesky forward dynamics. Section~\ref{sec:control_arch} establishes the model-based control framework, trajectory optimization, and multi-environment software deployment. Section~\ref{sec:validation} formalizes the multi-stage verification suite across four benchmark manipulators. Section~\ref{sec:results} reports empirical results on derivative fidelity, multi-DOF scalability, offline trajectory optimization, closed-loop tracking under parametric mismatch, and real-time NMPC. Finally, Section~\ref{sec:discussion} discusses the implications of CADENCE for simulation, optimal control, and robotics education, followed by concluding remarks.
 
 \begin{figure*}[!t]
 	\centering
 	\includegraphics[width=\textwidth]{fig1_tri_paradigm_architecture.pdf}
-	\caption{\textbf{Three-Tier System Architecture and Computational Pipeline.} Raw CAD-derived URDF descriptions (with arbitrary coordinate frames and unphysical CAD inertias) undergo: \textbf{(1) DH Synthesis across 4 Regimes:} resolving continuous gauge freedoms for skew (R1), intersecting (R2), parallel (R3), and collinear (R4) joint axes via common-normal feet $P, Q$ and automated axis-sign detection $s_i$; \textbf{(2) Inertia Realizability Projection:} spectral mapping of raw CAD inertia tensors onto the physically realizable set, enforcing the rigid-body triangle inequality ($I_1 + I_2 \ge I_3$) and positive-definite pseudo-inertias; \textbf{(3) Symbolic Dynamics via Algorithmic Differentiation:} closed-form mass metric $\bm{M}(\bm{q})$ and gravity $\bm{G}(\bm{q})$, generalized momentum directional derivative $\mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}}) = \operatorname{jtimes}(\bm{M}\dot{\bm{q}}, \bm{q}, \dot{\bm{q}}) - \frac{1}{2}\nabla_{\bm{q}}(\dot{\bm{q}}^T\bm{M}\dot{\bm{q}})$ eliminating $n^3$ Christoffel tensors, and Cholesky forward dynamics without explicit matrix inversion ($\bm{M} = \bm{R}^T\bm{R}$). The unified derivation branches into three complementary execution tiers: \textbf{Tier~1 (\texttt{MATLAB-Sym})} for glass-box algebraic inspectability and Lyapunov analysis; \textbf{Tier~2 (\texttt{MATLAB-CasADi})} for Simscape Multibody Model-Based Design; and \textbf{Tier~3 (\texttt{Python-MuJoCo})} for open-source nonlinear control (CTC and NMPC under IPOPT) with bare-metal ANSI C99 export. All tiers are validated against a \textbf{Five-Stage Verification Procedure} (S1: Physical invariants; S2: Monte Carlo forward kinematics; S3: Differential kinematics $\bm{J}, \dot{\bm{J}}$; S4: Sequential link inertia/gravity isolation; S5: Closed-loop CTC tracking in MuJoCo) cross-referenced against industrial platforms.}
+	\caption{\textbf{Overview of the CADENCE framework.} Automated transformation of raw URDF descriptions into closed-form, differentiable dynamics models for model-based control, trajectory optimization, and simulation integration across \texttt{MATLAB-Sym}, \texttt{MATLAB-CasADi}, and \texttt{Python-MuJoCo}. Detailed inputs, core stages, and outputs are presented in Section~\ref{sec:methodology}.}
 	\label{fig:fig1_architecture}
 \end{figure*}
 	
-	%==============================================================================
-	\section{Analytical Framework for Kinematic and Dynamic Modeling of Serial Manipulators} \label{sec:methodology}
-	%==============================================================================
-	The objective of this section is to transform a raw robot description into a complete, executable dynamic model without requiring any manual derivation. The modeling procedure follows the natural sequence dictated by the underlying physics. A URDF file represents a robot as a tree of links and joints whose frame placements and axis orientations are selected primarily for CAD representation rather than analytical modeling. Therefore, the serial chain of actuated joints is first identified, and its geometry is expressed in the canonical DH convention. Particular attention is given to degenerate configurations, such as parallel or collinear joint axes, for which the convention is not unique. It is further demonstrated that the selected conventions in these cases do not affect the resulting kinematic description. Once the geometric structure has been established, the mass properties of each link are expressed in the corresponding frames and verified for physical consistency, since inertial parameters exported from CAD software are often inconsistent. The corrected inertial data are then combined with the kinematic description to construct the inertial and gravitational components of the equations of motion. Subsequently, the velocity-dependent Coriolis and centrifugal terms are derived from the time derivative of the generalized momentum through algorithmic differentiation. This approach remains mathematically equivalent to the classical formulation while avoiding its computationally expensive symbolic expansion. Finally, joint accelerations are obtained by factorizing the manipulator inertia matrix and solving the resulting system through triangular substitution rather than explicit matrix inversion. The resulting framework provides an efficient, numerically robust, and fully symbolic forward-dynamics model that is generated automatically from the URDF description.
-	\subsection{Kinematic Chain Extraction and Denavit--Hartenberg Parameter Synthesis}
-	\label{subsec:dh_synthesis}
-	Transforming an arbitrary URDF into a valid analytical model begins with topological graph parsing and geometric axis alignment. Given an input URDF XML file, an entity-guarded parser constructs a directed acyclic graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$, where vertices $\mathcal{V} = \{L_0, \dots, L_M\}$ denote rigid links and directed edges $\mathcal{E} = \{J_1, \dots, J_M\}$ represent kinematic joints defined by parent-to-child homogeneous transformations $\bm{T}_{\text{joint},k}(\bm{t}_k, \bm{\varphi}_k) \in SE(3)$ and local actuation unit axes $\hat{\bm{u}}_k \in S^2$ \cite{ihab2026urdf2dt}.
+\section{Analytical Framework for Kinematic and Dynamic Modeling of Serial Manipulators} \label{sec:methodology}
+
+This section presents an automated framework for generating a complete analytical dynamic model from a URDF description. The framework automatically extracts a DH representation, verifies and corrects inertial properties, and derives the equations of motion in closed form. The resulting model is suitable for simulation, control, and trajectory optimization.
 	
-	The structural base link $L_0$ is isolated via set difference between parent and child vertex sets. A breadth-first search traversing from $L_0$ extracts the ordered active serial chain $\mathcal{K} = \{(L_0, J_1, L_1), \dots, (L_{n-1}, J_n, L_n)\}$ containing $n$ actuated joints with joint type indicators $\sigma_i \in \{1\text{ (revolute)}, 0\text{ (prismatic)}\}$. Intermediate non-actuated connections ($\text{type} = \text{fixed}$) along the chain are topologically contracted: their relative homogeneous transformations and inertial tensors are folded into the nearest upstream active link via rigid-body parallel-axis transformations \cite{ihab2026urdf2dt}.
-	
-	At the home configuration ($\bm{q} = \bm{0}$), let $\bm{O}_{i-1}, \bm{O}_i \in \mathbb{R}^3$ denote the global origins of consecutive active joints $i-1$ and $i$, and let $\hat{\bm{z}}_{i-1}, \hat{\bm{z}}_i \in S^2$ denote their unit joint axes expressed in base coordinates $\{\mathcal{F}_0\}$. Defining the origin displacement $\Delta \bm{o}_i = \bm{O}_i - \bm{O}_{i-1}$, the cross-product magnitude $\delta_\times = \|\hat{\bm{z}}_{i-1} \times \hat{\bm{z}}_i\|_2$, and the normal separation distance yields the geometric classification metrics \cite{ihab2026urdf2dt}:
+\subsection{Denavit--Hartenberg Convention} 	\label{subsec:dh_convention}
+%==============================================================================
+\begin{figure}[!t]
+	\centering
+	\includegraphics[width=0.4\columnwidth]{figures/DH_conv.pdf}
+	\caption{\textbf{Coordinate frames satisfying the DH constraints R1 and R2.} The link length $a_i$ and twist $\alpha_i$ are measured along and about $\hat{\bm{x}}_i$, while the link offset $d_i$ and joint angle $\theta_i$ are measured along and about $\hat{\bm{z}}_{i-1}$. Dashed lines indicate translated copies of the axes used to visualize distances and angles.}
+	\label{fig:DH_conv}
+\end{figure}
+
+The DH convention describes the pose of each link frame relative to its predecessor using four parameters  \cite{craig2005introduction, spong2020robot}. As illustrated in Fig.~\ref{fig:DH_conv}, consecutive frames are assigned such that
+\begin{align}
+	\text{Rule R1:} \quad &\hat{\bm{x}}_{i} \perp \hat{\bm{z}}_{i-1}, \label{eq:rule_r1} \\
+	\text{Rule R2:} \quad &\hat{\bm{x}}_{i} \text{ lies along the common normal intersecting } \hat{\bm{z}}_{i-1}, \label{eq:rule_r2}
+\end{align}
+so that $\hat{\bm{x}}_i$ coincides with the common normal between the joint axes $\hat{\bm{z}}_{i-1}$ and $\hat{\bm{z}}_i$. The relative pose is then fully characterized by the link length $a_i$, the link twist $\alpha_i$, the link offset $d_i$, and the joint angle $\theta_i$. These parameters define the homogeneous transformation
+\begin{equation}
+	\bm{A}_i = \operatorname{Rot}_z(\theta_i)\operatorname{Trans}_z(d_i)\operatorname{Trans}_x(a_i)\operatorname{Rot}_x(\alpha_i) = \begin{bmatrix}
+		\cos\theta_i & -\sin\theta_i\cos\alpha_i & \sin\theta_i\sin\alpha_i & a_i\cos\theta_i \\
+		\sin\theta_i & \cos\theta_i\cos\alpha_i & -\cos\theta_i\sin\alpha_i & a_i\sin\theta_i \\
+		0 & \sin\alpha_i & \cos\alpha_i & d_i \\
+		0 & 0 & 0 & 1
+	\end{bmatrix},
+	\label{eq:dh_matrix}
+\end{equation}
+where the joint variable enters through $\theta_i$ for a revolute joint and through $d_i$ for a prismatic joint, while the remaining parameters remain constant.
+
+DH parameterization is inherently non-unique because the DH geometric constraints do not uniquely determine all frame placements. For parallel joint axes, the common normal may be translated arbitrarily along the axes, introducing a translational degree of freedom. For collinear axes, any line perpendicular to the shared axis is a valid common normal, introducing an additional rotational degree of freedom about the axis. When consecutive axes intersect, the common normal is defined only up to its sign; reversing it changes the sign of the twist angle $\alpha_i$ and shifts the joint angle offset $\theta_i$ by $\pi$. The direction of each joint axis, which defines the positive sense of joint motion, may also be chosen arbitrarily, changing the sign convention of the corresponding joint variable. For prismatic joints, only the axis direction is specified, while the line itself may be positioned arbitrarily. Furthermore, the first frame is constrained only through its $z$-axis, and the terminal frame has no successor joint to constrain its placement, leaving additional freedom in their origins and $x$-axis orientations. These choices generate distinct DH parameterizations that nevertheless yield identical forward kinematics. Consequently, DH tables reported for the same manipulator often differ across textbooks, research articles, and manufacturer documentation \cite{craig2005introduction, spong2020robot, siciliano2010robotics}. An additional source of variation is the choice between the standard and modified DH conventions, which affects the form of the link transformation but is independent of the freedoms described above. The present work adopts the standard DH convention and defines a reproducible procedure for selecting among equivalent frame assignments while preserving the manipulator kinematics.
+
+\subsection{Kinematic Chain Extraction and Denavit--Hartenberg Parameter Synthesis}
+\label{subsec:dh_synthesis}
+
+Dynamic model generation from a URDF description begins by constructing a directed acyclic graph $\mathcal{G}=(\mathcal{V},\mathcal{E})$, where $\mathcal{V}$ denotes the set of links and $\mathcal{E}$ the set of joints. Each joint $k \in \mathcal{E}$ is characterized by a parent-to-child transformation $\bm{T}_{\mathrm{joint},k}\in SE(3)$ and a local actuation axis $\hat{\bm{u}}_k\in S^2$ \cite{ihab2026urdf2dt}.
+
+Assume that, at the home configuration ($\bm{q}=\bm{0}$), $\bm{O}_{i-1},\bm{O}_i\in\mathbb{R}^3$ are the origins of consecutive active joints and $\hat{\bm{z}}_{i-1},\hat{\bm{z}}_i\in S^2$ are their corresponding unit joint axes, all expressed in the base frame $\{\mathcal{F}_0\}$. Defining the origin offset $\Delta\bm{o}_i=\bm{O}_i-\bm{O}_{i-1}$ and the axis alignment metric $\delta_{\times}=\|\hat{\bm{z}}_{i-1}\times\hat{\bm{z}}_i\|_2$, the geometric separation between consecutive joint axes is quantified by
+\begin{equation}
+	d_{\min} = \frac{|\Delta \bm{o}_i \cdot (\hat{\bm{z}}_{i-1} \times \hat{\bm{z}}_i)|}{\delta_\times} \quad (\delta_\times > \epsilon_\parallel), \qquad 
+	d_\perp = \|\Delta \bm{o}_i - (\Delta \bm{o}_i \cdot \hat{\bm{z}}_{i-1})\hat{\bm{z}}_{i-1}\|_2 \quad (\delta_\times \le \epsilon_\parallel),
+	\label{eq:dh_metrics}
+\end{equation}
+where $d_{\min}$ denotes the shortest orthogonal distance between non-parallel axes and $d_\perp$ the perpendicular distance between parallel axes.
+
+\begin{figure}[!t]
+	\centering
+	\includegraphics[width=\columnwidth]{figures/Cases.png}
+	\caption{\textbf{Four-case geometric classification of consecutive joint-axis pairs.} Alignment into Case~1 (skew), Case~2 (intersecting), Case~3 (parallel), and Case~4 (collinear) based on parallelism ($\epsilon_\parallel$) and intersection ($\epsilon_\cap$) tolerances.}
+	\label{fig:cases}
+\end{figure}
+
+Using prescribed numerical tolerances $\epsilon_\parallel$ and $\epsilon_\cap$, each consecutive axis pair $(\hat{\bm{z}}_{i-1}, \hat{\bm{z}}_i)$ is classified into one of four canonical geometric configurations, as illustrated in Fig.~\ref{fig:cases}. This classification uniquely (or canonically) determines the feet of the common normal, $\bm{P}_{i-1}\in\mathcal{L}_{i-1}(\bm{O}_{i-1},\hat{\bm{z}}_{i-1})$ and $\bm{Q}_i\in\mathcal{L}_i(\bm{O}_i,\hat{\bm{z}}_i)$, along with the link normal direction $\hat{\bm{x}}_i \in S^2$:
+\begin{enumerate}
+	\item \textbf{Case 1 (General Skew Axes, $\delta_\times>\epsilon_\parallel$, $d_{\min}>\epsilon_\cap$):} The lines $\mathcal{L}_{i-1}(s)=\bm{O}_{i-1}+s\hat{\bm{z}}_{i-1}$ and $\mathcal{L}_i(t)=\bm{O}_i+t\hat{\bm{z}}_i$ admit a unique common normal. Minimizing $\|\mathcal{L}_{i-1}(s)-\mathcal{L}_i(t)\|_2^2$ with respect to $(s,t)$ yields the closed-form solution
 	\begin{equation}
-		d_{\min} = \frac{|\Delta \bm{o}_i \cdot (\hat{\bm{z}}_{i-1} \times \hat{\bm{z}}_i)|}{\delta_\times} \quad (\delta_\times > \epsilon_\parallel), \qquad 
-		d_\perp = \|\Delta \bm{o}_i - (\Delta \bm{o}_i \cdot \hat{\bm{z}}_{i-1})\hat{\bm{z}}_{i-1}\|_2 \quad (\delta_\times \le \epsilon_\parallel).
-		\label{eq:dh_metrics}
+		\begin{bmatrix} s^* \\ t^* \end{bmatrix} = \frac{1}{\delta_\times^2} \begin{bmatrix} 1 & \hat{\bm{z}}_{i-1} \cdot \hat{\bm{z}}_i \\ \hat{\bm{z}}_{i-1} \cdot \hat{\bm{z}}_i & 1 \end{bmatrix} \begin{bmatrix} \Delta \bm{o}_i \cdot \hat{\bm{z}}_{i-1} \\ -\Delta \bm{o}_i \cdot \hat{\bm{z}}_i \end{bmatrix},
+		\label{eq:pq_skew}
 	\end{equation}
-	Using numerical thresholds $\epsilon_\parallel = 10^{-5}$ and $\epsilon_\cap = 10^{-6}$~m, each consecutive axis pair $(\hat{\bm{z}}_{i-1}, \hat{\bm{z}}_i)$ is classified into one of four canonical geometric regimes to compute the foot-points $\bm{P}_{i-1} \in \mathcal{L}_{i-1}(\bm{O}_{i-1}, \hat{\bm{z}}_{i-1})$ and $\bm{Q}_i \in \mathcal{L}_i(\bm{O}_i, \hat{\bm{z}}_i)$ defining the common normal line segment:
-	\begin{enumerate}
-		\item \textbf{Regime 1 (General Skew Axes, $\delta_\times > \epsilon_\parallel, \, d_{\min} > \epsilon_\cap$):} The spatial lines $\mathcal{L}_{i-1}(s) = \bm{O}_{i-1} + s\hat{\bm{z}}_{i-1}$ and $\mathcal{L}_i(t) = \bm{O}_i + t\hat{\bm{z}}_i$ admit a unique shortest perpendicular with no gauge freedom. Minimizing the squared Euclidean distance $\|\mathcal{L}_{i-1}(s) - \mathcal{L}_i(t)\|_2^2$ yields the unconstrained $2 \times 2$ linear system:
-		\begin{equation}
-			\begin{bmatrix} s^* \\ t^* \end{bmatrix} = \frac{1}{1 - (\hat{\bm{z}}_{i-1} \cdot \hat{\bm{z}}_i)^2} \begin{bmatrix} 1 & \hat{\bm{z}}_{i-1} \cdot \hat{\bm{z}}_i \\ \hat{\bm{z}}_{i-1} \cdot \hat{\bm{z}}_i & 1 \end{bmatrix} \begin{bmatrix} \Delta \bm{o}_i \cdot \hat{\bm{z}}_{i-1} \\ -\Delta \bm{o}_i \cdot \hat{\bm{z}}_i \end{bmatrix},
-			\label{eq:pq_skew}
-		\end{equation}
-		providing the foot-points $\bm{P}_{i-1} = \bm{O}_{i-1} + s^*\hat{\bm{z}}_{i-1}$ and $\bm{Q}_i = \bm{O}_i + t^*\hat{\bm{z}}_i$, with normal axis $\hat{\bm{x}}_i = (\bm{Q}_i - \bm{P}_{i-1}) / \|\bm{Q}_i - \bm{P}_{i-1}\|_2$.
-		
-		\item \textbf{Regime 2 (Intersecting Axes, $\delta_\times > \epsilon_\parallel, \, d_{\min} \le \epsilon_\cap$):} The axes intersect at a single physical point $\bm{P}_{i-1} = \bm{Q}_i$ (enforcing link length $a_i = 0$) computed via Eq.~\eqref{eq:pq_skew}. The common normal direction is uniquely determined by $\hat{\bm{x}}_i = (\hat{\bm{z}}_{i-1} \times \hat{\bm{z}}_i) / \|\hat{\bm{z}}_{i-1} \times \hat{\bm{z}}_i\|_2$.
-		
-		\item \textbf{Regime 3 (Parallel Non-Collinear Axes, $\delta_\times \le \epsilon_\parallel, \, d_\perp > \epsilon_\cap$):} Because the axes are parallel, Eq.~\eqref{eq:pq_skew} becomes singular due to a continuous translational gauge freedom along $\hat{\bm{z}}_{i-1}$. The canonical solver resolves this ambiguity by anchoring $s^* = \lambda_i$ (defaulting to $\lambda_i = 0$, setting $\bm{P}_{i-1} = \bm{O}_{i-1}$), projecting orthogonally onto $\mathcal{L}_i$ via $t^* = (\bm{P}_{i-1} - \bm{O}_i) \cdot \hat{\bm{z}}_i$, setting $\bm{Q}_i = \bm{O}_i + t^*\hat{\bm{z}}_i$, and defining $\hat{\bm{x}}_i = (\bm{Q}_i - \bm{P}_{i-1}) / \|\bm{Q}_i - \bm{P}_{i-1}\|_2$.
-		
-		\item \textbf{Regime 4 (Collinear Axes, $\delta_\times \le \epsilon_\parallel, \, d_\perp \le \epsilon_\cap$):} The joint axes coincide ($a_i = 0, \, \alpha_i \in \{0, \pi\}$), admitting both translational gauge freedom $\lambda_i \in \mathbb{R}$ and rotational gauge freedom $\phi_i \in [-\pi, \pi)$ about $\hat{\bm{z}}_{i-1}$. The canonical solver sets $\bm{P}_{i-1} = \bm{Q}_i = \bm{O}_{i-1}$ and aligns the normal orientation with the preceding frame via $\hat{\bm{x}}_i = \operatorname{Rot}_z(\phi_i)\hat{\bm{x}}_{i-1}$ (with default canonical choice $\phi_i = 0$).
-	\end{enumerate}
+	where $\delta_\times^2 = 1 - (\hat{\bm{z}}_{i-1} \cdot \hat{\bm{z}}_i)^2$. The common-normal endpoints are $\bm{P}_{i-1}=\bm{O}_{i-1}+s^*\hat{\bm{z}}_{i-1}$ and $\bm{Q}_i=\bm{O}_i+t^*\hat{\bm{z}}_i$, and the common-normal axis is $\hat{\bm{x}}_i = (\bm{Q}_i - \bm{P}_{i-1}) / \|\bm{Q}_i - \bm{P}_{i-1}\|_2$.
 	
-	From the synthesized orthonormal frames $\bm{R}_i^{\text{DH}} = [\hat{\bm{x}}_i, \, \hat{\bm{z}}_i \times \hat{\bm{x}}_i, \, \hat{\bm{z}}_i] \in SO(3)$ and origins $\bm{O}_i^{\text{DH}} = \bm{Q}_i$, the four classical DH parameters are extracted analytically:
-	\begin{align}
-		a_i &= (\bm{Q}_i - \bm{P}_{i-1}) \cdot \hat{\bm{x}}_i, & \alpha_i &= \operatorname{atan2}\!\left( (\hat{\bm{z}}_{i-1} \times \hat{\bm{z}}_i) \cdot \hat{\bm{x}}_i, \, \hat{\bm{z}}_{i-1} \cdot \hat{\bm{z}}_i \right), \label{eq:dh_a_alpha} \\
-		d_i &= (\bm{P}_{i-1} - \bm{O}_{i-1}^{\text{DH}}) \cdot \hat{\bm{z}}_{i-1}, & \theta_i^{\text{off}} &= \operatorname{atan2}\!\left( (\hat{\bm{x}}_{i-1} \times \hat{\bm{x}}_i) \cdot \hat{\bm{z}}_{i-1}, \, \hat{\bm{x}}_{i-1} \cdot \hat{\bm{x}}_i \right). \label{eq:dh_d_theta}
-	\end{align}
-	These parameters yield the standard link transformation matrix $\bm{A}_i(q_i) = \operatorname{Rot}_z(\theta_i)\operatorname{Trans}_z(d_i)\operatorname{Trans}_x(a_i)\operatorname{Rot}_x(\alpha_i) \in SE(3)$:
-	\begin{equation}
-		\bm{A}_i(q_i) = \begin{bmatrix}
-			\cos\theta_i & -\sin\theta_i\cos\alpha_i & \sin\theta_i\sin\alpha_i & a_i\cos\theta_i \\
-			\sin\theta_i & \cos\theta_i\cos\alpha_i & -\cos\theta_i\sin\alpha_i & a_i\sin\theta_i \\
-			0 & \sin\alpha_i & \cos\alpha_i & d_i \\
-			0 & 0 & 0 & 1
-		\end{bmatrix},
-		\label{eq:dh_matrix}
-	\end{equation}
-	where $\theta_i = \theta_i^{\text{off}} + \sigma_i s_i q_i$ and $d_i = d_i^{\text{off}} + (1-\sigma_i) s_i q_i$. The scalar $s_i = \operatorname{sgn}(\operatorname{round}(\hat{\bm{u}}_i^{\text{urdf}} \cdot \hat{\bm{z}}_{i-1}^{\text{DH}})) \in \{-1, +1\}$ denotes the autonomously detected joint actuation parity factor.
+	\item \textbf{Case 2 (Intersecting Axes, $\delta_\times>\epsilon_\parallel$, $d_{\min}\le\epsilon_\cap$):} The axes intersect within tolerance at $\bm{P}_{i-1}=\bm{Q}_i=\bm{O}_{i-1}+s^*\hat{\bm{z}}_{i-1}$ (with $s^*$ obtained from Eq.~\eqref{eq:pq_skew}), implying a zero link length ($a_i=0$). Because $\bm{Q}_i - \bm{P}_{i-1}$ vanishes, the common-normal direction is defined via the cross product $\hat{\bm{x}}_i = (\hat{\bm{z}}_{i-1} \times \hat{\bm{z}}_i) / \delta_\times$.
 	
-	\begin{proposition}[Forward-Kinematic Gauge Invariance]
-		\label{prop:gauge_invariance}
-		Let $\bm{T}_0^n(\bm{q}) = \bm{A}_1(q_1)\cdots\bm{A}_n(q_n)\bm{T}_{\text{tool}}$ denote the global forward kinematics of a serial chain. If any intermediate frame $\mathcal{F}_i^{\text{DH}}$ ($1 \le i < n$) classified under Regime~3 or~4 undergoes an admissible gauge shift $\bm{T}_i' = \bm{T}_i \bm{\Delta}_i$, where $\bm{\Delta}_i = \operatorname{Trans}_z(\Delta d_i)\operatorname{Rot}_z(\Delta \theta_i)$ (with $\Delta \theta_i = 0$ in Regime~3), then updating the adjacent transformations via $\bm{A}_i'(q_i) = \bm{A}_i(q_i)\bm{\Delta}_i$ and $\bm{A}_{i+1}'(q_{i+1}) = \bm{\Delta}_i^{-1}\bm{A}_{i+1}(q_{i+1})$ preserves the standard DH geometric rules and leaves the end-effector pose $\bm{T}_0^n(\bm{q})$ invariant for all $\bm{q} \in \mathbb{R}^n$.
-	\end{proposition}
+	\item \textbf{Case 3 (Parallel Non-Collinear Axes, $\delta_\times\le\epsilon_\parallel$, $d_\perp>\epsilon_\cap$):} Because the axes are parallel, Eq.~\eqref{eq:pq_skew} becomes singular ($\delta_\times \to 0$), reflecting a translational gauge freedom along $\hat{\bm{z}}_{i-1}$. This ambiguity is resolved by selecting $s^*=\lambda_i$ (with canonical default $\lambda_i=0$ so that $\bm{P}_{i-1} = \bm{O}_{i-1}$), orthogonally projecting onto $\mathcal{L}_i$ via $t^* = (\bm{P}_{i-1} - \bm{O}_i) \cdot \hat{\bm{z}}_i$, and setting $\bm{Q}_i = \bm{O}_i + t^*\hat{\bm{z}}_i$ and $\hat{\bm{x}}_i = (\bm{Q}_i - \bm{P}_{i-1}) / \|\bm{Q}_i - \bm{P}_{i-1}\|_2$.
 	
-	\begin{proof}
-		Because joint $i+1$ acts strictly along $\hat{\bm{z}}_i$, the spatial perturbation matrix $\bm{\Delta}_i = \operatorname{Trans}_z(\Delta d_i)\operatorname{Rot}_z(\Delta \theta_i)$ belongs to the cylindrical subgroup $C(\hat{\bm{z}}_i) \subset SE(3)$. This subgroup commutes with the joint actuation operator $\bm{E}_{z}(q_{i+1}) \in \{\operatorname{Rot}_z(q_{i+1}), \operatorname{Trans}_z(q_{i+1})\}$, such that $\bm{\Delta}_i^{-1} \bm{E}_z(q_{i+1}) = \bm{E}_z(q_{i+1})\bm{\Delta}_i^{-1}$. Consequently, the product of adjacent transformations satisfies:
-		\begin{equation}
-			\bm{A}_i'(q_i)\bm{A}_{i+1}'(q_{i+1}) = \bm{A}_i(q_i)\bm{\Delta}_i \bm{\Delta}_i^{-1}\bm{A}_{i+1}(q_{i+1}) = \bm{A}_i(q_i)\bm{A}_{i+1}(q_{i+1})
-		\end{equation}
-		identically for all configuration states $(q_i, q_{i+1})$.
-	\end{proof}
+	\item \textbf{Case 4 (Collinear Axes, $\delta_\times\le\epsilon_\parallel$, $d_\perp\le\epsilon_\cap$):} The axes coincide, yielding $a_i=0$ and $\alpha_i\in\{0,\pi\}$. Both translational and rotational gauge freedoms are present. The canonical choice sets $\bm{P}_{i-1} = \bm{Q}_i = \bm{O}_{i-1}$ and defines $\hat{\bm{x}}_i = \operatorname{Rot}(\hat{\bm{z}}_{i-1}, \phi_i)\hat{\bm{x}}_{i-1}$ (with canonical default $\phi_i=0$, where $\operatorname{Rot}(\hat{\bm{z}}_{i-1}, \phi_i)\in SO(3)$ denotes a rotation by $\phi_i$ about $\hat{\bm{z}}_{i-1}$).
+\end{enumerate}
+
+The synthesized standard DH frame $\{\mathcal{F}_i^{\mathrm{DH}}\}$ is defined by the orientation $\bm{R}_i^{\mathrm{DH}} = [\hat{\bm{x}}_i, \, \hat{\bm{z}}_i \times \hat{\bm{x}}_i, \, \hat{\bm{z}}_i] \in SO(3)$ and origin $\bm{O}_i^{\mathrm{DH}}=\bm{Q}_i$. The corresponding constant DH parameters and home offsets are extracted as
+\begin{align}
+	a_i &= (\bm{Q}_i - \bm{P}_{i-1}) \cdot \hat{\bm{x}}_i, & \alpha_i &= \operatorname{atan2}\!\left( (\hat{\bm{z}}_{i-1} \times \hat{\bm{z}}_i) \cdot \hat{\bm{x}}_i, \, \hat{\bm{z}}_{i-1} \cdot \hat{\bm{z}}_i \right), \label{eq:dh_a_alpha} \\
+	d_i^{\mathrm{off}} &= (\bm{P}_{i-1} - \bm{O}_{i-1}^{\mathrm{DH}}) \cdot \hat{\bm{z}}_{i-1}, & \theta_i^{\mathrm{off}} &= \operatorname{atan2}\!\left( (\hat{\bm{x}}_{i-1} \times \hat{\bm{x}}_i) \cdot \hat{\bm{z}}_{i-1}, \, \hat{\bm{x}}_{i-1} \cdot \hat{\bm{x}}_i \right). \label{eq:dh_d_theta}
+\end{align}
+
+Substituting these parameters into Eq.~\eqref{eq:dh_matrix} yields the link transformation $\bm{A}_i(q_i)\in SE(3)$, with active joint variables $\theta_i(q_i) = \theta_i^{\mathrm{off}} + \sigma_i s_i q_i$ and $d_i(q_i) = d_i^{\mathrm{off}} + (1-\sigma_i)s_i q_i$, where $\sigma_i \in \{0,1\}$ indicates joint type ($1$ for revolute, $0$ for prismatic). The scalar $s_i = \operatorname{sgn}(\hat{\bm{u}}_i^0 \cdot \hat{\bm{z}}_{i-1}) \in \{-1,+1\}$ denotes the automatically detected joint actuation parity factor, where $\hat{\bm{u}}_i^0$ is the URDF joint axis $\hat{\bm{u}}_i$ expressed in $\{\mathcal{F}_0\}$.
+
+\noindent\textbf{Remark (Gauge Invariance):} The free parameters $\lambda_i$ (Cases~3 and~4) and $\phi_i$ (Case~4) correspond to a cylindrical gauge transformation $\bm{\Delta}_i = \operatorname{Trans}_z(\Delta d_i)\operatorname{Rot}_z(\Delta\theta_i) \in C(\hat{\bm{z}}_i)$ applied to the intermediate frame $\{\mathcal{F}_i^{\mathrm{DH}}\}$ ($1 \le i < n$). Since $\bm{\Delta}_i$ commutes with both the parallel/collinear link geometry of link $i$ ($\alpha_i \in \{0,\pi\}$) and the joint actuation operator of joint $i+1$ along $\hat{\bm{z}}_i$, any shift in $(\lambda_i, \phi_i)$ is absorbed directly into the adjacent constant offsets $(d_i^{\mathrm{off}}, \theta_i^{\mathrm{off}})$ and $(d_{i+1}^{\mathrm{off}}, \theta_{i+1}^{\mathrm{off}})$ via $\bm{A}_i'(q_i) = \bm{A}_i(q_i)\bm{\Delta}_i$ and $\bm{A}_{i+1}'(q_{i+1}) = \bm{\Delta}_i^{-1}\bm{A}_{i+1}(q_{i+1})$. Consequently, the standard DH constraints remain satisfied and the overall forward kinematics $\bm{T}_0^n(\bm{q})$ are strictly invariant to the choice of $(\lambda_i, \phi_i)$.
 	
 	\subsection{Inertial Parameters and Mass Matrix Assembly}
 	\label{subsec:inertial_mapping}
@@ -166,11 +192,10 @@ The remainder of the paper is organized as follows. The next three sections deta
 		\bm{P}_{C_i} &= \bm{R}_{d,i}^T \left( \bm{p}_{C_i}^0(\bm{0}) - \bm{p}_{d,i-1} \right), \label{eq:com_dh_map} \\
 		\bm{I}_i^{\text{DH}} &= \bm{R}_{\text{rel},i} \, \bm{I}_i^{\text{urdf}} \, \bm{R}_{\text{rel},i}^T, \quad \text{where } \bm{R}_{\text{rel},i} = \bm{R}_{d,i}^T \bm{R}_{u,i} \in SO(3). \label{eq:inertia_dh_map}
 	\end{align}
-	
 	\paragraph{Physical consistency of inertia tensors.}
 	To ensure physical consistency across models obtained from diverse CAD sources, the mapped inertia tensors are validated against rigid-body realizability conditions. A symmetric matrix $\bm{I}_i^{\text{DH}} \in \mathbb{S}^3$ represents a physically realizable rigid body of non-negative mass density $\rho(\bm{r}) \ge 0$ if and only if its principal eigenvalues $0 < I_1 \le I_2 \le I_3$, obtained from the spectral decomposition $\bm{I}_i^{\text{DH}} = \bm{V}\operatorname{diag}(I_1, I_2, I_3)\bm{V}^T$ with $\bm{V} \in SO(3)$, satisfy strict positivity and the triangle inequality $I_1 + I_2 \ge I_3$ \cite{sousa2019physical}. This is equivalent to requiring that the pseudo-inertia matrix $\bm{\mathcal{J}}_i = \frac{1}{2}\operatorname{tr}(\bm{I}_i^{\text{DH}})\bm{I}_3 - \bm{I}_i^{\text{DH}}$ be strictly positive-definite ($\bm{\mathcal{J}}_i \succ \bm{0}$).
 	
-	When a URDF link tensor violates these conditions, our framework projects its eigenvalues onto the realizable cone:
+	When an uncalibrated URDF link tensor violates these conditions, CADENCE projects its eigenvalues onto the physically realizable cone:
 	\begin{equation}
 		\tilde{I}_k = \max(I_k, \, \epsilon_{\text{eig}}) \quad (k=1,2,3), \qquad 
 		\hat{I}_3 = \min\!\left(\tilde{I}_3, \, \tilde{I}_1 + \tilde{I}_2 - \epsilon_{\text{tri}}\right), \qquad 
@@ -226,95 +251,107 @@ The remainder of the paper is organized as follows. The next three sections deta
 	
 	The first term in Eq.~\eqref{eq:cbias_exact} is evaluated as a directional derivative (Jacobian-vector product, JVP) via forward-mode algorithmic differentiation, while the second term is computed as the gradient of scalar kinetic energy via reverse-mode algorithmic differentiation.
 	
-	\begin{proposition}[Algebraic Equivalence to Classical Christoffel Form]
-		\label{prop:christoffel_equiv}
-		Let $\bm{C}(\bm{q}, \dot{\bm{q}}) \in \mathbb{R}^{n \times n}$ denote the classical Coriolis matrix with entries defined via Christoffel symbols of the first kind:
+	By expanding the Euler--Lagrange convective terms directly in terms of the generalized momentum $\bm{p}(\bm{q},\dot{\bm{q}}) = \bm{M}(\bm{q})\dot{\bm{q}}$ and kinetic energy $T(\bm{q},\dot{\bm{q}}) = \frac{1}{2}\dot{\bm{q}}^T\bm{p}(\bm{q},\dot{\bm{q}})$, the Coriolis and centrifugal bias vector is given by
+	\begin{equation}
+		\bm{c}_{\mathrm{bias}}(\bm{q},\dot{\bm{q}}) = \left(\frac{\partial \bm{p}(\bm{q},\dot{\bm{q}})}{\partial \bm{q}}\right)\dot{\bm{q}} - \nabla_{\bm{q}} T(\bm{q},\dot{\bm{q}}).
+		\label{eq:c_bias_def}
+	\end{equation}
+	By standard index symmetry of the quadratic form $\dot{\bm{q}}^T\bm{M}(\bm{q})\dot{\bm{q}}$, Eq.~\eqref{eq:c_bias_def} is algebraically identical to the classical Christoffel product $\bm{C}(\bm{q},\dot{\bm{q}})\dot{\bm{q}}$ whose entries are given by:
+	\begin{equation}
+		C_{ij}(\bm{q},\dot{\bm{q}}) = \frac{1}{2}\sum_{k=1}^n \left( \frac{\partial M_{ij}}{\partial q_k} + \frac{\partial M_{ik}}{\partial q_j} - \frac{\partial M_{kj}}{\partial q_i} \right)\dot{q}_k,
+		\label{eq:christoffel_classical}
+	\end{equation}
+	identically satisfying trajectory-level mechanical power balance, $\dot{\bm{q}}^T\bm{c}_{\mathrm{bias}}(\bm{q},\dot{\bm{q}}) = \frac{1}{2}\dot{\bm{q}}^T\dot{\bm{M}}(\bm{q})\dot{\bm{q}}$. Crucially, however, Eq.~\eqref{eq:c_bias_def} avoids explicitly constructing the rank-3 Christoffel tensor, yielding an order-of-magnitude reduction in symbolic expression complexity:
+	
+	\begin{proposition}[Computational Complexity of Algorithmic Momentum Derivatives]
+		\label{thm:complexity}
+		Let $\operatorname{cost}(\bm{M}(\bm{q}))$ denote the operation count required to evaluate the generalized mass matrix computational graph. Whereas evaluating $\bm{C}(\bm{q},\dot{\bm{q}})\dot{\bm{q}}$ via explicit symbolic Christoffel tensors scales as $\mathcal{O}(n^4)$ ($\mathcal{O}(n^3)$ index contractions of $\mathcal{O}(n)$ link-chain terms), evaluating the direct momentum formulation in Eq.~\eqref{eq:c_bias_def} via algorithmic differentiation (AD) satisfies
 		\begin{equation}
-			\left[\bm{C}(\bm{q},\dot{\bm{q}})\right]_{ij} = \sum_{k=1}^n \frac{1}{2}\left( \frac{\partial M_{ij}}{\partial q_k} + \frac{\partial M_{ik}}{\partial q_j} - \frac{\partial M_{kj}}{\partial q_i} \right) \dot{q}_k.
-			\label{eq:christoffel_classical}
+			\operatorname{cost}(\bm{c}_{\mathrm{bias}}(\bm{q},\dot{\bm{q}})) \le (c_f + c_r) \cdot \operatorname{cost}(\bm{M}(\bm{q})) + \mathcal{O}(n^2),
+			\label{eq:ad_cost_bound}
 		\end{equation}
-		Then, for all $(\bm{q}, \dot{\bm{q}}) \in \mathbb{R}^n \times \mathbb{R}^n$, the identity $\bm{C}(\bm{q}, \dot{\bm{q}})\dot{\bm{q}} \equiv \mathbf{c}_{\text{bias}}(\bm{q}, \dot{\bm{q}})$ holds, and the system satisfies the energy conservation condition $\dot{\bm{q}}^T(\dot{\bm{M}} - 2\bm{C})\dot{\bm{q}} = 0$.
+		where $c_f \le 3$ and $c_r \le 4$ are the standard operation-count multipliers for forward-mode Jacobian-vector products and reverse-mode gradients, respectively. Thus, the evaluation cost of $\bm{c}_{\mathrm{bias}}(\bm{q},\dot{\bm{q}})$ is bounded within a small constant factor of evaluating $\bm{M}(\bm{q})$ itself.
 	\end{proposition}
 	
 	\begin{proof}
-		Expanding the $i$-th component of the classical vector product $\bm{C}(\bm{q}, \dot{\bm{q}})\dot{\bm{q}}$ yields:
-		\begin{equation}
-			\left[\bm{C}(\bm{q}, \dot{\bm{q}})\dot{\bm{q}}\right]_i = \frac{1}{2}\sum_{j=1}^n \sum_{k=1}^n \frac{\partial M_{ij}}{\partial q_k}\dot{q}_j\dot{q}_k + \frac{1}{2}\sum_{j=1}^n \sum_{k=1}^n \frac{\partial M_{ik}}{\partial q_j}\dot{q}_j\dot{q}_k - \frac{1}{2}\sum_{j=1}^n \sum_{k=1}^n \frac{\partial M_{kj}}{\partial q_i}\dot{q}_j\dot{q}_k.
-		\end{equation}
-		Exchanging summation indices $j \leftrightarrow k$ in the second term demonstrates equivalence with the first summation. Combining these terms yields:
-		\begin{equation}
-			\sum_{j=1}^n \sum_{k=1}^n \frac{\partial M_{ij}}{\partial q_k}\dot{q}_k\dot{q}_j = \left[\left(\frac{\partial (\bm{M}(\bm{q})\dot{\bm{q}})}{\partial \bm{q}}\right)\dot{\bm{q}}\right]_i.
-		\end{equation}
-		The remaining summation corresponds to the scalar kinetic energy gradient $-\frac{1}{2}\frac{\partial}{\partial q_i}(\dot{\bm{q}}^T\bm{M}(\bm{q})\dot{\bm{q}})$, confirming that $\bm{C}(\bm{q},\dot{\bm{q}})\dot{\bm{q}} \equiv \mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}})$. Taking the inner product with $\dot{\bm{q}}$ yields $\dot{\bm{q}}^T \mathbf{c}_{\text{bias}} = \frac{1}{2}\dot{\bm{q}}^T \dot{\bm{M}}\dot{\bm{q}}$, verifying trajectory-level energy conservation $\frac{d}{dt}T = \dot{\bm{q}}^T(\bm{\tau} - \bm{G})$.
+		Given $\bm{M}(\bm{q})$, computing the generalized momentum $\bm{p} = \bm{M}(\bm{q})\dot{\bm{q}}$ and kinetic energy $T = \frac{1}{2}\dot{\bm{q}}^T\bm{p}$ requires one matrix-vector and one inner product, totaling $\operatorname{cost}(\bm{M}(\bm{q})) + \mathcal{O}(n^2)$ operations. Treating $\dot{\bm{q}}$ as a constant tangent vector, forward-mode AD evaluates the directional derivative $\left(\frac{\partial \bm{p}}{\partial \bm{q}}\right)\dot{\bm{q}}$ in at most $c_f \cdot \operatorname{cost}(\bm{p})$ operations ($c_f \le 3$). Similarly, by the Baur--Strassen theorem, reverse-mode AD evaluates the scalar kinetic energy gradient $\nabla_{\bm{q}} T$ in at most $c_r \cdot \operatorname{cost}(T)$ operations ($c_r \le 4$). Summing these upper bounds yields Eq.~\eqref{eq:ad_cost_bound}.
 	\end{proof}
 	
-	\begin{theorem}[Computational Complexity of Algorithmic Momentum Derivatives]
-		\label{thm:complexity}
-		Let $\operatorname{cost}(\bm{M}(\bm{q}))$ denote the computational complexity of evaluating the generalized mass matrix graph. While evaluating $\mathbf{c}_{\text{Christoffel}}$ via uncompressed Christoffel tensors scales as $\mathcal{O}(n^4)$ ($\mathcal{O}(n^{3.24})$ under compiler common subexpression elimination), evaluating the direct momentum formulation satisfies:
-		\begin{equation}
-			\operatorname{cost}(\mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}})) \le (c_f + c_r) \cdot \operatorname{cost}(\bm{M}(\bm{q})) + \mathcal{O}(n^2),
-			\label{eq:ad_cost_bound}
-		\end{equation}
-		where $c_f \le 3$ is the forward-mode directional derivative constant and $c_r \le 4$ is the reverse-mode gradient constant. Thus, the evaluation cost of the Coriolis bias vector is asymptotically bounded by a constant factor of the mass matrix cost.
-	\end{theorem}
-	
-	\begin{proof}
-		Evaluating the generalized momentum $\bm{p} = \bm{M}(\bm{q})\dot{\bm{q}}$ requires one matrix-vector product with complexity $\operatorname{cost}(\bm{M}) + \mathcal{O}(n^2)$. By forward-mode algorithmic differentiation, the Jacobian-vector product $\left(\frac{\partial \bm{p}}{\partial \bm{q}}\right)\dot{\bm{q}}$ along the constant seed vector $\dot{\bm{q}}$ costs at most $c_f \cdot \operatorname{cost}(\bm{p})$ operations, where $c_f \le 3$. By the Baur--Strassen theorem, evaluating the kinetic energy gradient $\nabla_{\bm{q}} T$ via reverse-mode AD requires at most $c_r \cdot \operatorname{cost}(T)$ operations, where $c_r \le 4$. Summing these operational bounds yields Eq.~\eqref{eq:ad_cost_bound}.
-	\end{proof}
-	
-	\begin{remark}[Mass Matrix Scaling and Empirical Complexity Bounds]
-		Analytically, constructing $\bm{M}(\bm{q}) = \sum_{i=1}^n (m_i \bm{J}_{v,i}^T\bm{J}_{v,i} + \bm{J}_{\omega,i}^T \bm{I}_i^0 \bm{J}_{\omega,i})$ naively requires $\sum_{i=1}^n i^2 = \frac{n(n+1)(2n+1)}{6} = \mathcal{O}(n^3)$ operations. Under computer-algebra and algorithmic differentiation systems, compiler common subexpression elimination (CSE) automatically merges redundant trigonometric sub-trees across kinematic frames. Across our systematic scalability benchmark ($n \in [3, 14]$, Table~\ref{tab:table3_scalability}), power-law log-log regressions yield an empirical scaling exponent of $\alpha = 2.27 \pm 0.10$ ($R^2 = 0.9985$) for $\bm{M}(\bm{q})$ and $\alpha = 2.28 \pm 0.09$ ($R^2 = 0.9989$) for the proposed momentum bias vector $\mathbf{c}_{\text{bias}}$. This empirically confirms that $\operatorname{cost}(\mathbf{c}_{\text{bias}})$ scales as a constant multiple ($3.98 \pm 0.04\times$) of $\operatorname{cost}(\bm{M})$, in contrast to classical Christoffel evaluation which scales at $\alpha = 3.24 \pm 0.14$ ($R^2 = 0.9985$).
-	\end{remark}
+	Analytically, assembling $\bm{M}(\bm{q}) = \sum_{i=1}^n (m_i \bm{J}_{v,i}^T\bm{J}_{v,i} + \bm{J}_{\omega,i}^T \bm{I}_i^0 \bm{J}_{\omega,i})$ via explicit link Jacobians requires $\sum_{i=1}^n i^2 = \frac{n(n+1)(2n+1)}{6} = \mathcal{O}(n^3)$ operations. Under symbolic code generation and common subexpression elimination (CSE), however, the compiler automatically folds shared recursive trigonometric sub-trees across kinematic frames, reducing the effective complexity of $\operatorname{cost}(\bm{M}(\bm{q}))$ toward $\mathcal{O}(n^2)$. By Eq.~\eqref{eq:ad_cost_bound}, $\bm{c}_{\mathrm{bias}}(\bm{q},\dot{\bm{q}})$ inherits this exact CSE-reduced scaling up to a constant factor bounded by $c_f + c_r \le 7$, whereas explicit Christoffel tensor evaluation suffers an additional $\mathcal{O}(n)$ index-contraction penalty.
 	
 	\subsection{Forward Dynamics via Symbolic Cholesky Factorization}
 	\label{subsec:cholesky_dynamics}
-	\begin{proposition}[Guaranteed Positive-Definiteness and Cholesky Dynamics]
-		\label{prop:cholesky}
-		For any serial kinematic chain with positive link masses $m_i > 0$ and realizable inertia tensors $\bm{I}_i^{\text{DH}} \succ \bm{0}$, if each joint axis $\bm{z}_{i-1}$ acts non-trivially on link $i$, then $\bm{M}(\bm{q}) \succ \bm{0}$ is strictly symmetric positive-definite for all $\bm{q} \in \mathbb{R}^n$. Consequently, $\bm{M}(\bm{q})$ admits a unique, pivot-free symbolic Cholesky decomposition $\bm{M}(\bm{q}) = \bm{R}(\bm{q})^T\bm{R}(\bm{q})$, where $\bm{R}(\bm{q})$ is an upper-triangular matrix with positive diagonal entries:
-		\begin{equation}
-			R_{ii}(\bm{q}) = \sqrt{M_{ii}(\bm{q}) - \sum_{k=1}^{i-1} R_{ki}(\bm{q})^2} > 0.
-		\end{equation}
-		Forward dynamics $\ddot{\bm{q}} = \bm{M}(\bm{q})^{-1}(\bm{\tau} - \mathbf{c}_{\text{bias}} - \bm{G})$ can therefore be resolved in $\frac{1}{3}n^3 + 2n^2$ operations via two successive triangular substitution passes:
-		\begin{equation}
-			\bm{R}(\bm{q})^T \bm{y} = \bm{\tau} - \mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}}) - \bm{G}(\bm{q}), \qquad \bm{R}(\bm{q})\ddot{\bm{q}} = \bm{y}.
-			\label{eq:cholesky_solve}
-		\end{equation}
-	\end{proposition}
+	
+	For any serial kinematic chain with positive link masses $m_i > 0$ and physically realizable inertia tensors $\bm{I}_i^{\mathrm{DH}} \succ \bm{0}$, provided each joint axis $\hat{\bm{z}}_{i-1}$ acts non-trivially on link $i$, the generalized mass matrix $\bm{M}(\bm{q}) \succ \bm{0}$ is strictly symmetric positive-definite for all $\bm{q} \in \mathbb{R}^n$. Consequently, $\bm{M}(\bm{q})$ admits a unique, branch-free symbolic Cholesky factorization $\bm{M}(\bm{q}) = \bm{R}(\bm{q})^T\bm{R}(\bm{q})$ without pivoting, where $\bm{R}(\bm{q})$ is an upper-triangular matrix with strictly positive diagonal entries:
+	\begin{equation}
+		R_{ii}(\bm{q}) = \sqrt{M_{ii}(\bm{q}) - \sum_{k=1}^{i-1} R_{ki}(\bm{q})^2} > 0, \qquad R_{ij}(\bm{q}) = \frac{1}{R_{ii}(\bm{q})}\left(M_{ij}(\bm{q}) - \sum_{k=1}^{i-1} R_{ki}(\bm{q})R_{kj}(\bm{q})\right) \quad (j > i).
+		\label{eq:cholesky_factor}
+	\end{equation}
+	The forward dynamics $\ddot{\bm{q}} = \bm{M}(\bm{q})^{-1}(\bm{\tau} - \bm{c}_{\mathrm{bias}}(\bm{q},\dot{\bm{q}}) - \bm{G}(\bm{q}))$ can therefore be evaluated in $\frac{1}{3}n^3 + \mathcal{O}(n^2)$ operations ($\frac{1}{6}n^3$ for factorization plus $n^2$ for triangular solves) via two successive substitution passes:
+	\begin{equation}
+		\bm{R}(\bm{q})^T \bm{y} = \bm{\tau} - \bm{c}_{\mathrm{bias}}(\bm{q},\dot{\bm{q}}) - \bm{G}(\bm{q}), \qquad \bm{R}(\bm{q})\ddot{\bm{q}} = \bm{y}.
+		\label{eq:cholesky_solve}
+	\end{equation}
 
 %==============================================================================
-\section{Model Predictive Control and Software Implementation}
-\label{sec:control_arch}
+\section{Model-Based Control, Trajectory Optimization, and Simulator Integration} \label{sec:control_arch}
 %==============================================================================
 
-Having established the dynamic model, we assess its usefulness in a demanding real-time setting. The model is embedded in a predictive controller that repeatedly solves a constrained trajectory optimization problem over a short future horizon, applies only the first control action, and solves again from the newly measured state. Because the optimization solver must differentiate the dynamics many times per iteration, the cost of evaluating the model and its derivatives directly determines the achievable control rate, which is why the efficiency of the model derived above matters in this application. This section also describes how the same model is exported to several software environments, ranging from human-readable expressions for theoretical analysis, through compiled code for digital-twin simulation, to high-speed runtimes for real-time control, so that a single description serves analysis, simulation, and deployment.
+Having derived the closed-form equations of motion and their exact derivatives, we integrate the analytical model with numerical multibody simulators to enable model-based feedback control and constrained trajectory optimization. In this architecture, the physics engine serves as the virtual plant, while the synthesized symbolic model operates on the controller and planner side, supplying the explicit dynamic matrices and higher-order sensitivities that numerical stepping engines do not expose.
 
-\subsection{Receding-Horizon Nonlinear Model Predictive Control}
-\label{subsec:nmpc}
-To assess real-time utility, the derived dynamics model is integrated into a continuous-time constrained Optimal Control Problem (OCP) across a prediction horizon $T_h$:
+\subsection{Simulator--Model Integration and Multi-Environment Deployment} \label{subsec:sim_integration}
+Because both the physics simulator and the analytical pipeline ingest the same URDF description, the virtual plant and the control model share a unified kinematic and inertial parameterization by construction. In closed-loop operation, the simulator advances the multibody state forward in time—incorporating contact mechanics, joint damping, and friction—while the generated analytical model evaluates inverse dynamics, forward dynamics, and exact state-transition derivatives from the measured joint states $(\bm{q}, \dot{\bm{q}})$. This separation between plant simulation and analytical model evaluation also permits controlled robustness experiments: inertial parameters in the simulator can be perturbed away from their nominal URDF values, or unmodeled payloads can be attached to the virtual end-effector, while the controller retains the nominal analytical model to evaluate tracking under parametric mismatch.
+
+To deliver the analytical model across different analysis and simulation environments, CADENCE exports the unified derivation into three software execution environments:
+\begin{itemize}
+	\item \textbf{\texttt{MATLAB-Sym}:} Human-interpretable symbolic expressions generated via the MATLAB Symbolic Math Toolbox, retaining explicit algebraic structure for theoretical inspection and Lyapunov stability analysis.
+	\item \textbf{\texttt{MATLAB-CasADi}:} Compressed directed acyclic graphs (DAGs) compiled to ANSI C code, paired with automated scripts (\texttt{dt\_build.m}) that programmatically assemble a corresponding physical model in Simscape Multibody.
+	\item \textbf{\texttt{Python-MuJoCo}:} Compiled ANSI C99 functions interfaced with Python, CasADi, and MuJoCo, providing closed-form dynamic evaluations and algorithmic differentiation sensitivities for closed-loop control and numerical optimization.
+\end{itemize}
+
+\subsection{Computed Torque Control} \label{subsec:ctc}
+Access to the explicit mass matrix $\bm{M}(\bm{q})$, velocity bias vector $\mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}})$, and gravitational vector $\bm{G}(\bm{q})$ enables global feedback linearization via Computed Torque Control (CTC). Because the synthesized DH joint axes may be oriented opposite to the local actuation axes defined in the raw URDF, the control law incorporates the diagonal joint-parity matrix $\bm{S} = \operatorname{diag}(s_1, \dots, s_n) \in \{-1, +1\}^{n \times n}$ extracted during kinematic synthesis (Section~\ref{subsec:dh_synthesis}) to map between simulator coordinates and DH generalized coordinates:
+\begin{equation}
+	\bm{\tau}(t) = \bm{S} \, \bm{\tau}_{\text{ana}}\!\left( \bm{S}\bm{q}(t), \, \bm{S}\dot{\bm{q}}(t), \, \bm{S}\bm{v}(t) \right),
+	\label{eq:ctc_law}
+\end{equation}
+where $\bm{\tau}_{\text{ana}}(\bar{\bm{q}}, \dot{\bar{\bm{q}}}, \bar{\bm{v}}) = \bm{M}(\bar{\bm{q}})\bar{\bm{v}} + \mathbf{c}_{\text{bias}}(\bar{\bm{q}}, \dot{\bar{\bm{q}}}) + \bm{G}(\bar{\bm{q}})$ is the analytical inverse dynamics function and $\bm{v}(t)$ is the outer-loop auxiliary command:
+\begin{equation}
+	\bm{v}(t) = \ddot{\bm{q}}_d(t) + \bm{K}_d\left(\dot{\bm{q}}_d(t) - \dot{\bm{q}}(t)\right) + \bm{K}_p\left(\bm{q}_d(t) - \bm{q}(t)\right).
+	\label{eq:ctc_outer}
+\end{equation}
+Here, $\bm{q}_d(t), \dot{\bm{q}}_d(t), \ddot{\bm{q}}_d(t) \in \mathbb{R}^n$ denote the desired reference trajectory and $\bm{K}_p, \bm{K}_d \in \mathbb{R}^{n \times n}$ are symmetric positive-definite proportional and derivative gain matrices. Under nominal parameters, substituting Eq.~\eqref{eq:ctc_law} into the manipulator equations of motion cancels the nonlinear inertial and velocity cross-couplings, reducing the closed-loop tracking error $\bm{e}(t) = \bm{q}_d(t) - \bm{q}(t)$ to the decoupled linear system $\ddot{\bm{e}}(t) + \bm{K}_d\dot{\bm{e}}(t) + \bm{K}_p\bm{e}(t) = \bm{0}$.
+
+\subsection{Trajectory Optimization and Receding-Horizon NMPC} \label{subsec:nmpc}
+Beyond feedback linearization, the differentiable forward dynamics graph enables constrained optimal control. We formulate the general continuous-time Optimal Control Problem (OCP) over a time horizon $T_h$ as:
 \begin{align}
 	\min_{\bm{x}(\cdot), \bm{u}(\cdot)} & \int_0^{T_h} \left( \|\bm{x}(t) - \bm{x}_{\text{ref}}(t)\|_{\bm{W}_x}^2 + \|\bm{u}(t)\|_{\bm{W}_u}^2 \right) dt + \|\bm{x}(T_h) - \bm{x}_{\text{ref}}(T_h)\|_{\bm{W}_T}^2 \label{eq:nmpc_ocp} \\
-	\text{subject to } & \dot{\bm{x}}(t) = \begin{bmatrix} \dot{\bm{q}}(t) \\ \bm{R}(\bm{q})^{-1}\bm{R}(\bm{q})^{-T}\left(\bm{u}(t) - \mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}}) - \bm{G}(\bm{q})\right) \end{bmatrix}, \quad \bm{x}(0) = \bm{x}_{\text{meas}}, \label{eq:nmpc_dyn} \\
+	\text{subject to } & \dot{\bm{x}}(t) = \begin{bmatrix} \dot{\bm{q}}(t) \\ \bm{R}(\bm{q})^{-1}\bm{R}(\bm{q})^{-T}\left(\bm{u}(t) - \mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}}) - \bm{G}(\bm{q})\right) \end{bmatrix}, \quad \bm{x}(0) = \bm{x}_{\text{init}}, \label{eq:nmpc_dyn} \\
 	& \bm{u}_{\min} \le \bm{u}(t) \le \bm{u}_{\max}, \quad \bm{x}_{\min} \le \bm{x}(t) \le \bm{x}_{\max}, \label{eq:nmpc_bounds} \\
 	& \|\bm{p}_{\text{ee}}(\bm{q}(t)) - \bm{p}_{\text{obs}}\|_2 \ge r_{\text{obs}} + d_{\text{safe}}, \label{eq:nmpc_obs}
 \end{align}
-where $\bm{x} = [\bm{q}^T, \dot{\bm{q}}^T]^T \in \mathbb{R}^{2n}$, $\bm{u} = \bm{\tau} \in \mathbb{R}^n$, and $\bm{W}_x$, $\bm{W}_u$, $\bm{W}_T$ are the state, input, and terminal weighting matrices. In Eq.~\eqref{eq:nmpc_dyn}, the products with $\bm{R}(\bm{q})^{-1}$ and $\bm{R}(\bm{q})^{-T}$ are realized by the two triangular substitution passes of Eq.~\eqref{eq:cholesky_solve} and never as explicit matrix inverses.
+where $\bm{x} = [\bm{q}^T, \dot{\bm{q}}^T]^T \in \mathbb{R}^{2n}$ is the state vector, $\bm{u} = \bm{\tau} \in \mathbb{R}^n$ is the joint torque input, $\bm{W}_x, \bm{W}_u, \bm{W}_T$ are positive-definite weighting matrices, and Eq.~\eqref{eq:nmpc_obs} enforces a minimum safety clearance $d_{\text{safe}}$ between the end-effector position $\bm{p}_{\text{ee}}(\bm{q})$ and a spherical workspace obstacle of radius $r_{\text{obs}}$ centered at $\bm{p}_{\text{obs}}$. In Eq.~\eqref{eq:nmpc_dyn}, the operators $\bm{R}(\bm{q})^{-1}$ and $\bm{R}(\bm{q})^{-T}$ denote the two triangular substitution passes of Eq.~\eqref{eq:cholesky_solve} rather than explicit matrix inversion.
 
-The continuous problem is transcribed using direct multiple shooting over $N$ intervals, enforcing continuity via fourth-order Runge--Kutta (RK4) integration constraints $\bm{g}_k(\bm{x}_k, \bm{u}_k, \bm{x}_{k+1}) = \bm{x}_{k+1} - \bm{\phi}_{\text{RK4}}(\bm{x}_k, \bm{u}_k, \Delta t) = \bm{0}$. The resulting nonlinear program is resolved through primal-dual interior-point iterations on the Karush--Kuhn--Tucker (KKT) system:
+The continuous OCP is transcribed into a finite-dimensional Nonlinear Program (NLP) via direct multiple shooting over $N$ intervals of duration $\Delta t = T_h / N$, enforcing state continuity through fourth-order Runge--Kutta (RK4) integration constraints $\bm{g}_k(\bm{x}_k, \bm{u}_k, \bm{x}_{k+1}) = \bm{x}_{k+1} - \bm{\phi}_{\text{RK4}}(\bm{x}_k, \bm{u}_k, \Delta t) = \bm{0}$. Gathering the stage variables into the primal decision vector $\bm{w}$, the NLP is solved via primal-dual interior-point iterations on the Karush--Kuhn--Tucker (KKT) system:
 \begin{equation}
-	\begin{bmatrix} \nabla_{\bm{w}\bm{w}}^2 \mathcal{L} + \bm{\Sigma} & \nabla_{\bm{w}} \bm{g}^T \\ \nabla_{\bm{w}} \bm{g} & \bm{0} \end{bmatrix} \begin{bmatrix} \Delta \bm{w} \\ \Delta \bm{\lambda} \end{bmatrix} = - \begin{bmatrix} \nabla_{\bm{w}} \mathcal{L} \\ \bm{g}(\bm{w}) \end{bmatrix}.
+	\begin{bmatrix} \nabla_{\bm{w}\bm{w}}^2 \mathcal{L} + \bm{\Sigma} & \nabla_{\bm{w}} \bm{g}^T \\ \nabla_{\bm{w}} \bm{g} & \bm{0} \end{bmatrix} \begin{bmatrix} \Delta \bm{w} \\ \Delta \bm{\lambda} \end{bmatrix} = - \begin{bmatrix} \nabla_{\bm{w}} \mathcal{L} \\ \bm{g}(\bm{w}) \end{bmatrix},
 	\label{eq:kkt_system}
 \end{equation}
-Because evaluating the stage sensitivities $\partial \bm{\phi}_{\text{RK4}}/\partial \bm{x}_k$ and $\partial \bm{\phi}_{\text{RK4}}/\partial \bm{u}_k$ requires differentiating the underlying forward dynamics graph, replacing explicit matrix inversion with triangular substitution and compacting the symbolic dynamics graph from 15,814 to 7,041 instructions (a $55.4\%$ reduction) directly cuts algorithmic differentiation time across the KKT matrix.
+where $\mathcal{L}(\bm{w}, \bm{\lambda})$ is the Lagrangian and $\bm{\Sigma}$ is the barrier Hessian block. Because the forward dynamics are represented as a closed-form CasADi expression graph, reverse-mode algorithmic differentiation supplies both the exact constraint Jacobian $\nabla_{\bm{w}}\bm{g}$ (built from the stage sensitivities $\partial \bm{\phi}_{\text{RK4}}/\partial \bm{x}_k$ and $\partial \bm{\phi}_{\text{RK4}}/\partial \bm{u}_k$) and the exact second-order Lagrangian Hessian $\nabla_{\bm{w}\bm{w}}^2 \mathcal{L}$. Replacing Christoffel expansions with generalized momentum derivatives and matrix inversion with symbolic Cholesky substitution directly reduces the computational graph differentiated during each KKT assembly.
 
+This single transcription supports two distinct modes of operation evaluated in the Results:
+\begin{enumerate}
+	\item \textbf{Offline Trajectory Optimization:} Given a boundary-value problem from $\bm{x}_{\text{init}} = \bm{x}_0$ to a target goal configuration $\bm{x}_{\text{ref}}(T_h) = \bm{x}_{\text{goal}}$, the NLP is solved once over the full maneuver horizon to synthesize a dynamically feasible, collision-free state and torque trajectory $(\bm{x}^*(t), \bm{u}^*(t))$, which can then be replayed in the simulator open-loop or tracked via Eq.~\eqref{eq:ctc_law}.
+	\item \textbf{Receding-Horizon NMPC:} In closed-loop predictive control, the initial state is updated at each sampling instant to the current simulator measurement ($\bm{x}_{\text{init}} = \bm{x}_{\text{meas}}$), the OCP is re-solved over a moving prediction horizon $T_h$ using the shifted previous solution as a warm start, and only the first optimal torque command $\bm{u}_0^*$ is applied to the plant before repeating the cycle.
+\end{enumerate}
 \subsection{Code Generation and Multi-Platform Deployment}
 \label{subsec:codegen_tiers}
-To accommodate diverse robotics applications, the pipeline compiles the symbolic model for three target tiers:
-\begin{itemize}
-	\item \textbf{Tier 1 (\texttt{MATLAB-Sym}):} Human-interpretable symbolic expressions generated via the MATLAB Symbolic Math Toolbox, retaining full skew-symmetric matrix representations for Lyapunov stability analysis and theoretical synthesis.
-	\item \textbf{Tier 2 (\texttt{MATLAB-CasADi}):} Compressed directed acyclic graphs (DAGs) compiled to ANSI C code, combined with automated scripts (\texttt{dt\_build.m}) that programmatically assemble a 1:1 physical digital twin in Simscape Multibody.
-	\item \textbf{Tier 3 (\texttt{Python-MuJoCo}):} High-performance compiled C runtimes interfaced with Python and headless MuJoCo physics engines, supporting dual-twin co-simulation and real-time NMPC updates at frequencies exceeding $1$~kHz.
+To support diverse robotics workflows, CADENCE compiles the analytical model into three software execution environments:
+\begin{itemize} 
+	\item \textbf{\texttt{MATLAB-Sym}:} Human-readable symbolic expressions generated with the MATLAB Symbolic Math Toolbox, preserving exact matrix structures for analysis, verification, and control-theoretic development. 
+	\item \textbf{\texttt{MATLAB-CasADi}:} Optimized directed acyclic graphs (DAGs) compiled to ANSI C code and integrated with automated build scripts (\texttt{dt\_build.m}) that construct a one-to-one digital twin in Simscape Multibody. 
+	\item \textbf{\texttt{Python-MuJoCo}:} High-performance compiled C executables interfaced with Python and the MuJoCo physics engine, enabling dual-twin co-simulation and real-time NMPC execution at update rates exceeding $1\,\mathrm{kHz}$. 
 \end{itemize}
-
 %==============================================================================
 \section{Validation Protocol and Benchmark Platforms}
 \label{sec:validation}
@@ -322,9 +359,8 @@ To accommodate diverse robotics applications, the pipeline compiles the symbolic
 
 To establish that automatically generated models are correct, physically consistent, and usable for control, the pipeline is applied to four industrial manipulators chosen to span different geometries, wrist designs, and payload classes. Each synthesized model is then subjected to a graded sequence of automated checks. The sequence begins with basic physical and algebraic properties of the model, continues with kinematics and their derivatives, compares the dynamic terms link by link against independent physics simulators, and ends with closed-loop trajectory tracking. Ordering the checks from the most elementary to the most integrated allows any failure to be traced to the stage where it first appears, while a model that passes every stage is consistent both with the underlying physics and with the reference simulators.
 
-\subsection{Benchmark Manipulators}
-\label{subsec:benchmark_platforms}
-The proposed pipeline was evaluated across four industrial manipulators covering various kinematic configurations, spherical and non-spherical wrists, and payload classes:
+\subsection{Benchmark Manipulators} \label{subsec:benchmark_platforms}
+CADENCE was evaluated across four industrial manipulators covering various kinematic configurations, spherical and non-spherical wrists, and payload classes:
 \begin{enumerate}
 	\item \textbf{Universal Robots UR5 (Medium-Reach Cobot):} 6-DOF architecture ($18.40$~kg mass, $0.850$~m reach) featuring parallel shoulder and elbow axes with an orthogonal, non-spherical wrist ($d_4 = 0.1091$~m, $d_5 = 0.0946$~m, $a_6 = 0.0823$~m).
 	\item \textbf{Universal Robots UR16e (Heavy-Payload Cobot):} 6-DOF architecture ($33.10$~kg mass, $0.900$~m reach, $16.0$~kg payload) characterized by massive proximal links ($m_2 = 10.45$~kg, $m_3 = 4.32$~kg) inducing pronounced nonlinear inertial cross-coupling.
@@ -334,10 +370,10 @@ The proposed pipeline was evaluated across four industrial manipulators covering
 
 \subsection{Multi-Stage Verification Procedure}
 \label{subsec:verification_suite}
-To guarantee mathematical correctness and physical consistency, every synthesized model must pass five automated verification stages:
+To ensure the mathematical correctness and physical consistency of the generated model, CADENCE employs five sequential automated verification stages that must be passed prior to deployment:
 
 \begin{enumerate}
-	\item \textbf{Stage 1: Physical and Algebraic Invariants.} Asserts strictly positive link masses ($m_i > 0$), verifies the spectral triangle inequality on the sanitized inertia tensors $\hat{\bm{I}}_i^{\text{DH}}$, checks rotation matrix orthogonality ($\|\bm{R}^T\bm{R} - \bm{I}\|_F < 10^{-10}$), guarantees mass matrix positive-definiteness ($\bm{M}(\bm{q}) \succ \bm{0}$), and validates static gravity equilibrium:
+	\item \textbf{Stage 1: Physical and Algebraic Invariants.} Asserts strictly positive link masses, verifies the spectral triangle inequality on the sanitized inertia tensors $\hat{\bm{I}}_i^{\text{DH}}$, checks rotation matrix orthogonality ($\|\bm{R}^T\bm{R} - \bm{I}\|_F < 10^{-10}$), guarantees $\bm{M}(\bm{q}) \succ \bm{0}$, and validates static gravity equilibrium:
 	\begin{equation}
 		\|\bm{\tau}(\bm{q},\bm{0},\bm{0}) - \bm{G}(\bm{q})\|_\infty < 10^{-12}~\text{N}\cdot\text{m}.
 	\end{equation}
@@ -354,23 +390,17 @@ To guarantee mathematical correctness and physical consistency, every synthesize
 		\tau_i^{(i)}(t) = M_{ii}^{(i)}(\bm{q})\ddot{q}_i(t) + G_i^{(i)}(\bm{q}).
 		\label{eq:isolated_link_torque}
 	\end{equation}
-	Because the scalar inertia $M_{ii}^{(i)}$ of an isolated link rotating about its own joint axis is invariant to $q_i$ ($\partial M_{ii}^{(i)}/\partial q_i \equiv 0$), inertial and gravitational torques are decoupled and validated directly against simulator readings.
-	
-	\item \textbf{Stage 5: Closed-Loop Computed Torque Trajectory Tracking.} Implements a feedback-linearizing controller with automated joint sign parity correction $\bm{S} = \operatorname{diag}(s_1, \dots, s_n) \in \{-1, +1\}^{n \times n}$:
-	\begin{equation}
-		\bm{\tau}(t) = \bm{S} \, \bm{\tau}_{\text{ana}}\!\left( \bm{S}\bm{q}(t), \, \bm{S}\dot{\bm{q}}(t), \, \bm{S}\left[\ddot{\bm{q}}_d(t) + \bm{K}_d(\dot{\bm{q}}_d - \dot{\bm{q}}) + \bm{K}_p(\bm{q}_d - \bm{q})\right] \right),
-		\label{eq:ctc_law}
-	\end{equation}
-	ensuring global asymptotic tracking error convergence via the linear error system $\ddot{\bm{e}}(t) + \bm{K}_d\dot{\bm{e}}(t) + \bm{K}_p\bm{e}(t) = \bm{0}$.
+	Because the scalar inertia $M_{ii}^{(i)}$ of an isolated link rotating about its own joint axis is invariant to $q_i$ ($\partial M_{ii}^{(i)}/\partial q_i \equiv 0$), inertial and gravitational torques are decoupled and validated directly against simulator readings.	
+	\item \textbf{Stage 5: Closed-Loop Computed Torque Verification.} Executes the feedback-linearizing controller of Eq.~\eqref{eq:ctc_law} in closed loop with the physics simulator along a smooth reference trajectory, verifying that the synthesized dynamic matrices and automated joint-parity mapping $\bm{S}$ achieve asymptotic tracking convergence without sign-flip instability.
 \end{enumerate}
 	
 %==============================================================================
-\section*{Results}
+\section{Results} \label{sec:results}
 %==============================================================================
 
 The results are organized around five testable hypotheses, each addressing a distinct claim about the proposed modeling pipeline. We first examine the computational cost of the generated dynamics model, measuring how much the reformulation of the velocity-dependent terms and the factorization-based forward dynamics shrink the symbolic computation graph and its execution time. We then verify that the geometric synthesis and the inertial correction handle manipulators of different architectures and manufacturers without manual tuning, and that the resulting models agree with independent physics simulators. Next, we study how the cost grows with the number of joints, to determine whether the observed savings persist in larger systems. The final two experiments test the model in closed loop: first in trajectory tracking with a model-based controller, and then within a predictive controller that must respect actuator limits and avoid an obstacle in the workspace. Each experiment begins with the hypothesis under test, describes the setup, and ends with the quantitative findings that support or refute it.
 
-\subsection*{Computational Cost Reduction of the Dynamics Model}
+\subsection{Computational Cost Reduction of the Dynamics Model}
 
 \noindent\textbf{Hypothesis Tested:} \textit{Reformulating Coriolis and centrifugal effects via generalized momentum directional derivatives eliminates the combinatorial explosion of rank-3 Christoffel tensors, reducing symbolic instruction counts by over $50\%$ on 6-DOF industrial manipulators without numerical loss.}
 
@@ -383,9 +413,9 @@ The empirical instruction audit on velocity-dependent and forward terms confirms
 	\item \textbf{Exact Machine Precision:} Across 10,000 random state evaluations, the absolute torque discrepancy between Eq.~\eqref{eq:cbias_exact} and Eq.~\eqref{eq:christoffel_classical} remained bounded by $4.16 \times 10^{-17}$~N$\cdot$m, confirming algebraic equivalence without numerical drift.
 \end{enumerate}
 
-Comparing the three software execution tiers on 6-DOF industrial manipulators illustrates the practical trade-off between algebraic inspectability and computational execution rate: Tier~1 (\texttt{MATLAB-Sym}) provides analytical transparency and glass-box inspectability for theoretical analysis and Lyapunov stability proofs, with derivation time of $6.42 \pm 0.35$~s and forward dynamics latency of $310.0 \pm 18.0~\mu$s ($3.2$~kHz); Tier~2 (\texttt{MATLAB-CasADi}) supports industrial Model-Based Design and Simscape Multibody co-simulation with derivation time of $0.22 \pm 0.02$~s and forward dynamics latency of $165.0 \pm 10.5~\mu$s ($6.1$~kHz); while Tier~3 (\texttt{Python-MuJoCo}) achieves sub-tenth-second derivation ($0.09 \pm 0.01$~s) and $>10.0$~kHz throughput ($99.2 \pm 2.8~\mu$s in Python/CasADi and $78.7~\mu$s in compiled ANSI C), enabling high-speed nonlinear control and digital-twin simulation. In 5,000-step forward simulation rollouts, Tier~3 executes in $0.4035$~s ($12.4\times$ faster than real-time), narrowing the runtime gap with native compiled C MuJoCo down to $4.8\times$.
+Comparing the \texttt{MATLAB-Sym}, \texttt{MATLAB-CasADi}, and \texttt{Python-MuJoCo} execution environments on 6-DOF industrial manipulators illustrates the practical trade-off between algebraic inspectability and computational execution rate: \texttt{MATLAB-Sym} provides analytical transparency and glass-box inspectability for theoretical analysis and Lyapunov stability proofs, with derivation time of $6.42 \pm 0.35$~s and forward dynamics latency of $310.0 \pm 18.0~\mu$s ($3.2$~kHz); \texttt{MATLAB-CasADi} supports industrial Model-Based Design and Simscape Multibody co-simulation with derivation time of $0.22 \pm 0.02$~s and forward dynamics latency of $165.0 \pm 10.5~\mu$s ($6.1$~kHz); while \texttt{Python-MuJoCo} achieves sub-tenth-second derivation ($0.09 \pm 0.01$~s) and $>10.0$~kHz throughput ($99.2 \pm 2.8~\mu$s in Python/CasADi and $78.7~\mu$s in compiled ANSI C), enabling high-speed nonlinear control and digital-twin simulation. In 5,000-step forward simulation rollouts, \texttt{Python-MuJoCo} executes in $0.4035$~s ($12.4\times$ faster than real-time), narrowing the runtime gap with native compiled C MuJoCo down to $4.8\times$.
 
-\subsection*{Derivative Capability: Algorithmic Differentiation versus Finite Differences}
+\subsection{Derivative Capability: Algorithmic Differentiation versus Finite Differences}
 
 \noindent\textbf{Hypothesis Tested:} \textit{Reverse-mode algorithmic differentiation (AD) on the closed-form computation graph evaluates state-transition and control Jacobians to machine precision ($\epsilon_{\text{rel}} < 10^{-7}$), whereas multibody simulator finite-difference perturbations suffer truncation errors ($\epsilon_{\text{rel}} > 10^{-2}$), while natively providing the exact second-order Lagrangian Hessian required for fast SQP convergence.}
 
@@ -395,11 +425,11 @@ This comparison reveals an important architectural constraint in physics engines
 
 On the 4th-order Runge--Kutta (RK4) discrete map, a numerical finite-difference perturbation sweep across perturbation step sizes $\epsilon \in [10^{-8}, 10^{-2}]$ demonstrated the classic numerical trade-off between floating-point subtractive cancellation and truncation error: while $\epsilon = 10^{-6}$ achieved an error of $1.53 \times 10^{-8}$, coarse perturbations yielded severe inaccuracies ($1.22 \times 10^{-4}$ at $\epsilon = 10^{-4}$ and $1.15 \times 10^{-1}$ at $\epsilon = 10^{-2}$). In contrast, our closed-form AD graph evaluated both continuous and discrete Jacobians to exact floating-point precision ($\max |\bm{A}_{\text{AD}} - \bm{A}_{\text{ref}}| = 1.53 \times 10^{-8}$ on UR16e; $2.31 \times 10^{-9}$ on UR5; $1.02 \times 10^{-9}$ on KUKA iiwa). Continuous state-transition Jacobians evaluated in $122.8~\mu$s for $n=3$, $1.09$~ms for $n=6$, and $9.84$~ms for $n=14$, while RK4 discrete Jacobians required $600.0~\mu$s ($n=3$) to $77.7$~ms ($n=14$).
 
-Pinocchio analytical C++ derivatives (\texttt{computeABADerivatives}) evaluated first-order spatial sensitivities matching our AD Jacobians within $3.81 \times 10^{-8}$. Furthermore, regarding second-order curvature, Pinocchio provides C++ templating for algorithmic differentiation via CasADi to construct the Lagrangian Hessian. Our framework provides a complementary capability: it directly synthesizes the closed-form symbolic Euler--Lagrange graph from raw URDF XML, compressing the momentum bias derivative by $63.2\%$ at derivation time before AD graph generation. This generates exact sparse Lagrangian Hessians $\nabla_{\bm{w}\bm{w}}^2 \mathcal{L}$ in $53.9~\mu$s for $n=3$, $85.4~\mu$s for $n=6$, and $162.6~\mu$s for $n=14$, providing the exact second-order curvature essential for rapid quadratic convergence in constrained optimal control.
+Pinocchio analytical C++ derivatives (\texttt{computeABADerivatives}) evaluated first-order spatial sensitivities matching our AD Jacobians within $3.81 \times 10^{-8}$. Furthermore, regarding second-order curvature, Pinocchio provides C++ templating for algorithmic differentiation via CasADi to construct the Lagrangian Hessian. CADENCE provides a complementary capability: it directly synthesizes the closed-form symbolic Euler--Lagrange graph from raw URDF XML, compressing the momentum bias derivative by $63.2\%$ at derivation time before AD graph generation. This generates exact sparse Lagrangian Hessians $\nabla_{\bm{w}\bm{w}}^2 \mathcal{L}$ in $53.9~\mu$s for $n=3$, $85.4~\mu$s for $n=6$, and $162.6~\mu$s for $n=14$, providing the exact second-order curvature essential for rapid quadratic convergence in constrained optimal control.
 
-\subsection*{Verification Across Diverse Manipulator Architectures}
+\subsection{Verification Across Diverse Manipulator Architectures}
 
-\noindent\textbf{Hypothesis Tested:} \textit{The four-regime DH synthesis and the physical-consistency projection of inertia tensors deterministically resolve geometric gauge freedoms, manufacturer sign discrepancies, and unphysical CAD inertia models across diverse manipulator morphologies without manual parameter tuning.}
+\noindent\textbf{Hypothesis Tested:} \textit{The four-case DH synthesis and the physical-consistency projection of inertia tensors deterministically resolve geometric gauge freedoms, manufacturer sign discrepancies, and unphysical CAD inertia models across diverse manipulator morphologies without manual parameter tuning.}
 
 Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Universal Robots UR5, UR16e, ABB IRB 120, and Unimation Puma 560). Table~\ref{tab:table1_morphology} summarizes their extracted kinematic, topological, and computational profiles, and Table~\ref{tab:table2_verification} details the results of the 5-stage verification dashboard.
 
@@ -411,13 +441,13 @@ Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Univer
 		\fbox{\begin{minipage}[c]{0.95\linewidth}
 				\centering
 				\textbf{\normalsize Universal Robots UR5}\\[3pt]
-				\fbox{\parbox[c][2.2cm][c]{0.96\linewidth}{\centering \scriptsize \textit{[Photo / Render Placeholder: \texttt{figures/robot\_ur5}]}}}\\[4pt]
+				\includegraphics[width=0.96\linewidth,height=2.3cm,keepaspectratio]{figures/robot_ur5.png}\\[4pt]
 				\scriptsize
 				\begin{tabular}{@{}ll@{}}
 					\textbf{Arch:} 6-DOF Cobot & \textbf{Reach:} $0.850$~m \\
 					\textbf{Active Mass:} $16.99$~kg & \textbf{Payload:} $5.0$~kg \\
 					\textbf{Wrist:} Non-Spherical & \textbf{FD Latency:} $85.1~\mu$s \\
-					\textbf{Regimes:} $0/3/2/1$ & \textbf{Signs:} $[+++++-]$ \\
+					\textbf{Cases:} $0/3/2/1$ & \textbf{Signs:} $[+++++-]$ \\
 				\end{tabular}
 				\vspace{1pt}
 		\end{minipage}}
@@ -431,13 +461,13 @@ Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Univer
 		\fbox{\begin{minipage}[c]{0.95\linewidth}
 				\centering
 				\textbf{\normalsize Universal Robots UR16e}\\[3pt]
-				\fbox{\parbox[c][2.2cm][c]{0.96\linewidth}{\centering \scriptsize \textit{[Photo / Render Placeholder: \texttt{figures/robot\_ur16e}]}}}\\[4pt]
+				\includegraphics[width=0.96\linewidth,height=2.3cm,keepaspectratio]{figures/robot_ur16e.png}\\[4pt]
 				\scriptsize
 				\begin{tabular}{@{}ll@{}}
 					\textbf{Arch:} 6-DOF Heavy Cobot & \textbf{Reach:} $0.900$~m \\
 					\textbf{Active Mass:} $27.26$~kg & \textbf{Payload:} $16.0$~kg \\
 					\textbf{Wrist:} Non-Spherical & \textbf{FD Latency:} $72.1~\mu$s \\
-					\textbf{Regimes:} $0/3/2/1$ & \textbf{Signs:} $[+++++-]$ \\
+					\textbf{Cases:} $0/3/2/1$ & \textbf{Signs:} $[+++++-]$ \\
 				\end{tabular}
 				\vspace{1pt}
 		\end{minipage}}
@@ -452,13 +482,13 @@ Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Univer
 		\fbox{\begin{minipage}[c]{0.95\linewidth}
 				\centering
 				\textbf{\normalsize ABB IRB 120}\\[3pt]
-				\fbox{\parbox[c][2.2cm][c]{0.96\linewidth}{\centering \scriptsize \textit{[Photo / Render Placeholder: \texttt{figures/robot\_abb}]}}}\\[4pt]
+				\includegraphics[width=0.96\linewidth,height=2.3cm,keepaspectratio]{figures/robot_abb.png}\\[4pt]
 				\scriptsize
 				\begin{tabular}{@{}ll@{}}
 					\textbf{Arch:} 6-DOF Articulated & \textbf{Reach:} $0.580$~m \\
 					\textbf{Active Mass:} $11.93$~kg & \textbf{Payload:} $3.0$~kg \\
 					\textbf{Wrist:} 3-Axis Spherical & \textbf{FD Latency:} $88.3~\mu$s \\
-					\textbf{Regimes:} $1/3/1/1$ & \textbf{Signs:} $[++++--]$ \\
+					\textbf{Cases:} $1/3/1/1$ & \textbf{Signs:} $[++++--]$ \\
 				\end{tabular}
 				\vspace{1pt}
 		\end{minipage}}
@@ -472,20 +502,20 @@ Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Univer
 		\fbox{\begin{minipage}[c]{0.95\linewidth}
 				\centering
 				\textbf{\normalsize Unimation Puma 560}\\[3pt]
-				\fbox{\parbox[c][2.2cm][c]{0.96\linewidth}{\centering \scriptsize \textit{[Photo / Render Placeholder: \texttt{figures/robot\_puma560}]}}}\\[4pt]
+				\includegraphics[width=0.96\linewidth,height=2.3cm,keepaspectratio]{figures/robot_puma560.png}\\[4pt]
 				\scriptsize
 				\begin{tabular}{@{}ll@{}}
 					\textbf{Arch:} 6-DOF Classical & \textbf{Reach:} $0.864$~m \\
 					\textbf{Active Mass:} $23.50$~kg & \textbf{Payload:} $2.5$~kg \\
 					\textbf{Wrist:} Spherical (Offset) & \textbf{FD Latency:} $100.3~\mu$s \\
-					\textbf{Regimes:} $0/4/1/1$ & \textbf{Signs:} $[+--+--]$ \\
+					\textbf{Cases:} $0/4/1/1$ & \textbf{Signs:} $[+--+--]$ \\
 				\end{tabular}
 				\vspace{1pt}
 		\end{minipage}}
 		\caption{\textbf{Unimation Puma 560 (Classical Spatial Offset Benchmark).}}
 		\label{fig:gallery_puma}
 	\end{subfigure}
-	\caption{\textbf{Morphological Diversity and Visual Robot Gallery of the Four Benchmark Manipulators.} Each panel details the architectural classification, kinematic reach, active link mass, rated payload, wrist topology, autonomous sign mapping vector $\bm{S} = \operatorname{diag}(s_1, \dots, s_6)$, geometric regime counts ($R_1$: skew, $R_2$: intersecting, $R_3$: parallel, $R_4$: collinear), and single-step forward dynamics latency under symbolic Cholesky decomposition. Clean framed placeholders are sized to allow seamless drop-in of physical laboratory photos or CAD/MuJoCo renderings without modifying document layout.}
+	\caption{\textbf{Morphological diversity and showcase configurations of the four benchmark manipulators.} Architectural classification, reach, active mass, payload, wrist topology, sign mapping vector $\bm{S}$, geometric case counts ($C_1$--$C_4$), and forward dynamics latency for UR5, UR16e, ABB IRB 120, and Puma 560 models evaluated in MuJoCo.}
 	\label{fig:fig5_robot_gallery}
 \end{figure*}
 
@@ -497,7 +527,7 @@ Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Univer
 	\setlength{\tabcolsep}{3pt}
 	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c c c c c}
 		\toprule
-		\shortstack{\textbf{Robot}\\\textbf{Platform}} & \shortstack{\textbf{Mass/Load}\\\textbf{(kg)}} & \shortstack{\textbf{Reach}\\\textbf{(m)}} & \shortstack{\textbf{Wrist}\\\textbf{Type}} & \shortstack{\textbf{Regimes}\\\textbf{1 / 2 / 3 / 4}} & \shortstack{\textbf{Sign Vector}\\\textbf{$\bm{s} = [s_1,\dots,s_6]$}} & \shortstack{\textbf{Deriv.}\\\textbf{(s)}} & \shortstack{\textbf{ID Latency}\\\textbf{($\mu$s)}} & \shortstack{\textbf{FD Latency}\\\textbf{($\mu$s)}} \\
+		\shortstack{\textbf{Robot}\\\textbf{Platform}} & \shortstack{\textbf{Mass/Load}\\\textbf{(kg)}} & \shortstack{\textbf{Reach}\\\textbf{(m)}} & \shortstack{\textbf{Wrist}\\\textbf{Type}} & \shortstack{\textbf{Cases}\\\textbf{1 / 2 / 3 / 4}} & \shortstack{\textbf{Sign Vector}\\\textbf{$\bm{s} = [s_1,\dots,s_6]$}} & \shortstack{\textbf{Deriv.}\\\textbf{(s)}} & \shortstack{\textbf{ID Latency}\\\textbf{($\mu$s)}} & \shortstack{\textbf{FD Latency}\\\textbf{($\mu$s)}} \\
 		\midrule
 		\textbf{UR5} & $18.4\,/\,5.0$ & $0.850$ & Non-Spherical & $0\,/\,3\,/\,2\,/\,1$ & $[+1,+1,+1,+1,+1,-1]$ & $0.059$ & $79.1$ & $85.1$ \\
 		\textbf{UR16e} & $33.1\,/\,16.0$ & $0.900$ & Non-Spherical & $0\,/\,3\,/\,2\,/\,1$ & $[+1,+1,+1,+1,+1,-1]$ & $0.057$ & $108.8$ & $99.2$ ($78.7$) \\
@@ -527,13 +557,13 @@ Figure~\ref{fig:fig5_robot_gallery} showcases the four testbed platforms (Univer
 
 The empirical results across the four-manipulator testbed confirm the morphological hypothesis:
 \begin{enumerate}
-	\item \textbf{Deterministic Resolution of Gauge Freedoms (Regime 3):} For parallel axes in UR5 and UR16e ($\hat{\bm{z}}_1 \parallel \hat{\bm{z}}_2 \parallel \hat{\bm{z}}_3$), our canonical solver eliminates axial origin drift, yielding exact link lengths ($a_2 = 0.4250, a_3 = 0.3923$~m for UR5; $a_2 = 0.4784, a_3 = 0.3600$~m for UR16e) with invariant end-effector poses.
+	\item \textbf{Deterministic Resolution of Gauge Freedoms (Case 3):} For parallel axes in UR5 and UR16e ($\hat{\bm{z}}_1 \parallel \hat{\bm{z}}_2 \parallel \hat{\bm{z}}_3$), our canonical solver eliminates axial origin drift, yielding exact link lengths ($a_2 = 0.4250, a_3 = 0.3923$~m for UR5; $a_2 = 0.4784, a_3 = 0.3600$~m for UR16e) with invariant end-effector poses.
 	\item \textbf{Autonomous Sign Alignment:} The pipeline deterministically detects manufacturer joint-axis reversals ($\bm{s} = [+1, +1, +1, +1, +1, -1]$ for UR; $[+1, +1, +1, +1, -1, -1]$ for ABB; $[+1, -1, -1, +1, -1, -1]$ for Puma 560), preventing sign-flip feedback destabilization.
 	\item \textbf{Inertial Realizability Recovery:} On the Puma 560, the historical literature CAD inertia tensor for Link 3 violated the rigid-body triangle inequality ($I_{xx} + I_{yy} = 0.0031 < I_{zz} = 0.0036$~kg$\cdot$m$^2$). Spectral projection (Eq.~\eqref{eq:spectral_sanitization}) restored positive-definiteness and triangle inequality for link~3 ($\lambda_1 = 0.0013, \lambda_2 = 0.0018, \lambda_3 = 0.0018$~kg$\cdot$m$^2$), ensuring the full-body mass matrix $\bm{M}(\bm{q})$ maintains $\lambda_{\min} \ge 0.034$ and physical realizability without modifying principal axes.
 	\item \textbf{Physics Engine Parity:} Across all four platforms, forward kinematics position error remained below $1.86 \times 10^{-10}$~m, unit quaternion orientation error remained $<4.2 \times 10^{-8}$~rad across 1,000 Monte Carlo configurations, and verification pass rate reached \textbf{100\%}.
 \end{enumerate}
 
-\subsection*{Scalability with the Number of Degrees of Freedom}
+\subsection{Scalability with the Number of Degrees of Freedom}
 
 \noindent\textbf{Hypothesis Tested:} \textit{Under compiler Common Subexpression Elimination (CSE), our proposed momentum directional derivative scales with an empirical power-law exponent of $\alpha \approx 2.29$ versus $\alpha \approx 3.25$ for classical Christoffel expansions, producing strictly monotonic instruction graph reductions and runtime speedups for all $n \ge 4$, while preserving sub-second derivation across all scales.}
 
@@ -542,7 +572,7 @@ To test this scaling hypothesis, serial kinematic chains spanning $n \in \{3, 4,
 \begin{figure*}[!t]
 	\centering
 	\includegraphics[width=\textwidth]{fig6_scalability_and_complexity.pdf}
-	\caption{\textbf{Systematic Multi-DOF Scalability, Instruction Compression, and Asymptotic Complexity Verification ($n \in [3, 14]$).} \textbf{(a)} Log-log power-law regression of symbolic instruction count (opcodes) versus system degrees of freedom $n$. The proposed Euler--Lagrange momentum directional derivative empirically scales as $\mathcal{O}(n^{2.28})$ compared to $\mathcal{O}(n^{3.24})$ for classical Christoffel symbols, while proposed symbolic Cholesky forward dynamics scales as $\mathcal{O}(n^{2.32})$ versus $\mathcal{O}(n^{3.21})$ for explicit matrix inversion. \textbf{(b)} Monotonic symbolic graph reduction (\%) as a function of system dimension $n$, growing from $-0.2\%$ at $n=3$ to $-76.8\%$ for Coriolis evaluation and $-75.5\%$ for forward dynamics at $n=14$. \textbf{(c)} Single-step forward dynamics execution latency ($\mu$s) on an x86-64 CPU core and corresponding Cholesky speedup factor, demonstrating up to $3.94\times$ acceleration ($1,419.7~\mu$s $\to 360.7~\mu$s) on a 14-DOF serial chain. \textbf{(d)} Offline derivation runtime ($t_{\text{deriv}}$, remaining strictly sub-second at $0.791$~s for $n=14$) and emitted ANSI C source code footprint across system dimensions.}
+	\caption{\textbf{Multi-DOF scalability and symbolic instruction compression ($n \in [3, 14]$).} \textbf{(a)} Power-law regression of instruction counts versus degrees of freedom $n$. \textbf{(b)} Symbolic graph reduction (\%) relative to classical formulations. \textbf{(c)} Single-step forward dynamics speedup factor of symbolic Cholesky versus matrix inversion. \textbf{(d)} Single-step execution latency ($\mu$s) on an x86-64 CPU core.}
 	\label{fig:fig6_scalability_complexity}
 \end{figure*}
 
@@ -577,7 +607,7 @@ The multi-DOF scaling benchmark confirms the asymptotic hypothesis:
 	\item \textbf{Exact Parity Across All DOFs:} Residual torque error between Christoffel and momentum formulations remained bounded between $4.44 \times 10^{-16}$ and $4.44 \times 10^{-15}$~N$\cdot$m across all $n \in [3, 14]$.
 \end{enumerate}
 
-\subsection*{Constrained Offline Trajectory Optimization and Dynamic Replay}
+\subsection{Constrained Offline Trajectory Optimization and Dynamic Replay}
 
 \noindent\textbf{Hypothesis Tested:} \textit{Exact symbolic Lagrangian Hessians accelerate non-convex optimal control convergence by over $60\%$ in iteration counts relative to Quasi-Newton L-BFGS approximations, producing physically realizable dynamic trajectories that replay accurately in high-fidelity physics simulators.}
 
@@ -608,9 +638,9 @@ Across all 15 test problems, the exact Hessian formulation achieved \textbf{100.
 
 In contrast, Quasi-Newton L-BFGS converged only on the UR5, requiring $249.2 \pm 38.3$ iterations (solve time $3.905$~s, 95\% CI $[230.3, 268.3]$), demonstrating that the exact Hessian achieved a \textbf{96.8\% iteration reduction} and a \textbf{14.39$\times$ wall-clock speedup}. On the heavy-payload UR16e, L-BFGS achieved \textbf{0.0\% convergence}, timing out at the 500-iteration cutoff for all 15 boundary-value problems due to ill-conditioning near obstacle constraints. On the kinematically redundant 7-DOF KUKA iiwa 7, L-BFGS converged on only 1 out of 15 runs (\textbf{6.7\% convergence}), requiring 358 iterations ($7.802$~s), on which the exact Hessian achieved a \textbf{95.6\% iteration reduction} and a \textbf{9.82$\times$ wall-clock speedup}. These results demonstrate that exact second-order curvature is not merely an accelerator, but an absolute prerequisite for reliable convergence in constrained robot trajectory optimization.
 
-To verify dynamic consistency on a physics simulator, the optimized state and control trajectories were replayed within the MuJoCo simulation environment ($dt = 1$~ms) under closed-loop Computed Torque Control tracking versus pure open-loop torque replay. As reported in Table~\ref{tab:table4_trajectory_opt}, closed-loop tracking RMSE remained tightly bounded: $0.0916$~rad on UR5, $0.1710$~rad on UR16e, and $0.3871$~rad on KUKA iiwa 7. When the planned torque sequences were replayed pure open-loop without feedback, steady-state joint droop emerged ($0.3048$~rad on UR5, $0.3322$~rad on UR16e, and $1.1628$~rad on KUKA iiwa 7) due to unmodeled joint viscous damping and friction in the simulator plant that were absent from the idealized conservative Euler--Lagrange model. This disparity underscores a core premise of our framework: multibody simulators provide high-fidelity contact and friction modeling, while the generated closed-form model provides the necessary differential structure for trajectory synthesis and feedback linearization.
+To verify dynamic consistency on a physics simulator, the optimized state and control trajectories were replayed within the MuJoCo simulation environment ($dt = 1$~ms) under closed-loop Computed Torque Control tracking versus pure open-loop torque replay. As reported in Table~\ref{tab:table4_trajectory_opt}, closed-loop tracking RMSE remained tightly bounded: $0.0916$~rad on UR5, $0.1710$~rad on UR16e, and $0.3871$~rad on KUKA iiwa 7. When the planned torque sequences were replayed pure open-loop without feedback, steady-state joint droop emerged ($0.3048$~rad on UR5, $0.3322$~rad on UR16e, and $1.1628$~rad on KUKA iiwa 7) due to unmodeled joint viscous damping and friction in the simulator plant that were absent from the idealized conservative Euler--Lagrange model. This disparity underscores a core premise of CADENCE: multibody simulators provide high-fidelity contact and friction modeling, while the generated closed-form model provides the necessary differential structure for trajectory synthesis and feedback linearization.
 
-\subsection*{Trajectory Tracking: Model-Based Computed Torque Control versus Decentralized PID}
+\subsection{Trajectory Tracking: Model-Based Computed Torque Control versus Decentralized PID}
 
 \noindent\textbf{Hypothesis Tested:} \textit{Full white-box feedback linearization utilizing exact compiled dynamic matrices globally linearizes and decouples multi-axis dynamics, reducing high-acceleration tracking errors by over $95\%$ compared to model-free decentralized PID.}
 
@@ -619,20 +649,20 @@ Multi-axis trajectory tracking was evaluated on the heavy-payload UR16e ($33.1$~
 \begin{figure*}[!t]
 	\centering
 	\includegraphics[width=\textwidth]{fig3_tracking_trajectories_ur16e.pdf}
-	\caption{\textbf{High-Speed Multi-Axis Trajectory Tracking Benchmark on the Heavy-Payload UR16e Manipulator.} (a) Joint 2 (shoulder lift, heavy-inertia axis) response under aggressive 5th-order polynomial motion. Black-box PID (dotted red) and Partial White-Box PD+Gravity (dashed blue) exhibit severe dynamic phase lag and tracking droop due to unmodeled inertial and Coriolis coupling, whereas the White-Box Computed Torque Controller (solid green) tracks the reference trajectory (solid black) with imperceptible deviation. (b) Total joint position tracking error norm $\|\bm{e}(t)\|_2$ on a logarithmic scale. (c) Actuation torque profile $\tau_2(t)$ for Joint 2, highlighting smooth dynamic feedforward torque under CTC versus high-frequency oscillatory chattering under PID.}
+	\caption{\textbf{Trajectory tracking performance on the UR16e manipulator.} \textbf{(a)} Joint 2 shoulder lift response under aggressive 5th-order polynomial motion. \textbf{(b)} Position tracking error norm $\|\bm{e}(t)\|_2$ on a logarithmic scale. \textbf{(c)} Joint 2 control torque $\tau_2(t)$ under Computed Torque Control (CTC) versus decentralized PID.}
 	\label{fig:fig3_tracking_ur16e}
 \end{figure*}
 
 \begin{figure*}[!t]
 	\centering
 	\includegraphics[width=\textwidth]{fig4_torque_profiles_and_error.pdf}
-	\caption{\textbf{Tracking Error Reduction and Decoupled Joint Performance under Multi-Sine Excitation.} (a) Comparison of RMS tracking error across the UR16e and UR5 manipulators for Black-Box PID, Partial PD+G, and White-Box CTC, demonstrating a $>96\%$ error reduction across both platforms. (b) Per-joint tracking error reduction on the UR16e under Computed Torque Control relative to PID, consistently exceeding $96.5\%$ across all six joints.}
+	\caption{\textbf{Tracking error reduction under high-acceleration multi-sine excitation.} \textbf{(a)} RMS tracking error across UR16e and UR5 manipulators for decentralized PID, PD+Gravity, and model-based CTC. \textbf{(b)} Per-joint tracking error reduction on the UR16e under CTC relative to PID.}
 	\label{fig:fig4_torque_profiles_and_error}
 \end{figure*}
 
-As shown in Figure~\ref{fig:fig3_tracking_ur16e}a--b, Black-Box PID suffers a peak tracking error of $2.5713$~rad and an RMS error of $1.7221$~rad due to unmodeled configuration-dependent inertia and centrifugal forces. Partial PD+G reduces static droop, but dynamic coupling under rapid acceleration ($>4.5$~rad/s$^2$) causes severe phase lag. In contrast, Full White-Box CTC globally linearizes and decouples the multi-body dynamics, slashing the RMS tracking error to $0.0112$~rad---an \textbf{overall tracking error reduction of $99.35\%$ on the UR16e} and \textbf{$96.15\%$ on the UR5} (Figure~\ref{fig:fig4_torque_profiles_and_error}a--b), while completely eliminating the high-frequency torque chattering of PID (Figure~\ref{fig:fig3_tracking_ur16e}c).
+As shown in Figure~\ref{fig:fig3_tracking_ur16e}a--b, Black-Box PID suffers a peak tracking error of $2.5713$~rad and an RMS error of $1.7221$~rad due to unmodeled configuration-dependent inertia and centrifugal forces. Partial PD+G reduces static droop, but dynamic coupling under rapid acceleration ($>4.5$~rad/s$^2$) causes severe phase lag. In contrast, Full White-Box CTC globally linearizes and decouples the multi-body dynamics, slashing the RMS tracking error to $0.0112$~rad---an \textbf{overall tracking error reduction of $99.35\%$ on the UR16e} and \textbf{$96.15\%$ on the UR5} (with per-joint error reductions consistently exceeding $96.5\%$ across all six joints, Figure~\ref{fig:fig4_torque_profiles_and_error}a--b), while completely eliminating the high-frequency torque chattering of PID (Figure~\ref{fig:fig3_tracking_ur16e}c).
 
-\subsection*{Model-Based Control on Physics Engine Under Parametric Mismatch}
+\subsection{Model-Based Control on Physics Engine Under Parametric Mismatch}
 
 \noindent\textbf{Hypothesis Tested:} \textit{Model-based Computed Torque Control synthesized from the generated closed-form model maintains superior tracking accuracy over model-free PID on the simulator plant under moderate parametric uncertainty, while revealing the need for integral compensation or adaptive identification under large unexpected point loads.}
 
@@ -662,7 +692,7 @@ To ensure a fair and reproducible benchmark, controller gains were tuned accordi
 \begin{figure*}[!t]
 	\centering
 	\includegraphics[width=\textwidth]{fig8_opt_and_mismatch.pdf}
-	\caption{\textbf{Offline Trajectory Optimization and Plant-Model Mismatch Control.} \textbf{(a)} Solver iterations across 15 random boundary-value problems on UR5, UR16e, and KUKA iiwa 7, comparing Quasi-Newton L-BFGS (orange bars, 500-iteration cutoff) against the exact symbolic Lagrangian Hessian (green bars, converging in 7.9--15.6 iterations, achieving a 95.6\%--96.8\% iteration reduction and up to $14.39\times$ wall-clock speedup). Hatched red bar highlights 0\% convergence for L-BFGS on UR16e. \textbf{(b)} Closed-loop trajectory tracking RMSE on the MuJoCo physics plant across four parameter-mismatch conditions (Nominal 0\%, $\pm 10\%$, $\pm 20\%$, and $\pm 20\%$ mass mismatch plus 5~kg end-effector payload step) with 95\% confidence intervals. Model-based CTC (blue curve) outperforms decentralized PID (red dashed) and PD+Gravity (orange dashed) by 41.1\%--98.0\% across Levels 0--2, while Level 3 highlights the necessity of integral compensation or online parameter calibration under large unknown point loads.}
+	\caption{\textbf{Constrained offline trajectory optimization and closed-loop control under parametric mismatch.} \textbf{(a)} Solver iterations across 15 boundary-value problems on UR5, UR16e, and KUKA iiwa 7 comparing exact Lagrangian Hessians with Quasi-Newton L-BFGS. \textbf{(b)} Joint tracking RMSE on the MuJoCo plant across four parametric mismatch conditions (mean with 95\% confidence intervals).}
 	\label{fig:fig8_opt_and_mismatch}
 \end{figure*}
 
@@ -670,9 +700,9 @@ Under nominal conditions (Level 0), CTC achieves an RMSE of $0.0155$~rad (95\% C
 
 Under $\pm 10\%$ mismatch (Level 1), CTC preserves a \textbf{68.0\% error reduction} ($0.0842$~rad, 95\% CI $[0.0837, 0.0847]$ vs.\ $0.2636$~rad, 95\% CI $[0.2490, 0.2779]$ for PID). Under $\pm 20\%$ mismatch (Level 2), CTC maintains a \textbf{41.1\% error reduction} ($0.1080$~rad, 95\% CI $[0.1071, 0.1090]$ vs.\ $0.1833$~rad, 95\% CI $[0.1776, 0.1887]$ for PID).
 
-Under Level 3, however, the unmodeled $+5.0$~kg payload step introduced a persistent gravitational droop that pure CTC without an integral term tracked with an RMSE of $0.2629$~rad (95\% CI $[0.2596, 0.2656]$), whereas decentralized PID achieved $0.1868$~rad (95\% CI $[0.1845, 0.1888]$) due to its integrator state accumulating steady-state error. This empirical finding clarifies the operational boundary of pure feedback linearization: when large unexpected point loads act on the plant, pure model-based CTC requires either integral action (CTC+I) or online parameter identification. Crucially, because our pipeline exports differentiable symbolic models, the model parameters (link masses, centers of mass) can be updated online via gradient descent, providing the exact capability required for digital-twin adaptive calibration.
+Under Level 3, however, the unmodeled $+5.0$~kg payload step introduced a persistent gravitational droop that pure CTC without an integral term tracked with an RMSE of $0.2629$~rad (95\% CI $[0.2596, 0.2656]$), whereas decentralized PID achieved $0.1868$~rad (95\% CI $[0.1845, 0.1888]$) due to its integrator state accumulating steady-state error. This empirical finding clarifies the operational boundary of pure feedback linearization: when large unexpected point loads act on the plant, pure model-based CTC requires either integral action (CTC+I) or online parameter identification. Crucially, because CADENCE exports differentiable symbolic models, the model parameters (link masses, centers of mass) can be updated online via gradient descent, providing the exact capability required for digital-twin adaptive calibration.
 
-\subsection*{Nonlinear Model Predictive Control with Obstacle and Torque Constraints}
+\subsection{Nonlinear Model Predictive Control with Obstacle and Torque Constraints}
 
 \noindent\textbf{Hypothesis Tested:} \textit{Symbolic momentum--Cholesky compression reduces KKT constraint Jacobian opcodes by over $40\%$ in optimal control, accelerating online NLP solve times and mitigating peak latency spikes during active obstacle avoidance, with expanding benefits in kinematically redundant systems.}
 
@@ -681,7 +711,7 @@ To test this hypothesis, an empirical closed-loop receding-horizon NMPC benchmar
 \begin{figure*}[!t]
 	\centering
 	\includegraphics[width=\textwidth]{fig7_nmpc_benchmark.pdf}
-	\caption{\textbf{Empirical Closed-Loop Nonlinear Model Predictive Control (NMPC) Benchmark with Obstacle Avoidance across 6-DOF and 7-DOF Manipulators.} \textbf{(a)} Receding-horizon NLP mean solve time per sampling step on the heavy-payload UR16e ($n=6$) and kinematically redundant KUKA LBR iiwa 7 ($n=7$), comparing the classical Christoffel + Inversion baseline (red bars) against the proposed Momentum + Cholesky formulation (blue bars), highlighting a $1.57\times$ to $1.63\times$ solve-time acceleration. \textbf{(b)} 99th-percentile (p99) latency spike mitigation during active obstacle avoidance, demonstrating a 43.5\% spike reduction on UR16e ($6,880.9 \to 3,890.7$~ms) and a 25.9\% reduction on KUKA iiwa ($9,954.4 \to 7,381.1$~ms). Both platforms strictly satisfied obstacle safety margins throughout the motion.}
+	\caption{\textbf{Closed-loop receding-horizon NMPC with obstacle avoidance.} \textbf{(a)} Mean solve time per step on the UR16e ($n=6$) and KUKA iiwa 7 ($n=7$), comparing the classical Christoffel + Inversion baseline with the CADENCE momentum + Cholesky formulation. \textbf{(b)} 99th-percentile (p99) latency spike mitigation during active obstacle avoidance.}
 	\label{fig:fig7_nmpc_benchmark}
 \end{figure*}
 
@@ -714,7 +744,7 @@ The empirical optimal control benchmark confirms the NMPC hypothesis:
 	\item \textbf{Rigorous Constraint Adherence and Tracking Accuracy:} Both formulations strictly satisfied torque bounds and safety boundaries with positive margins ($+0.2809$~m minimum obstacle clearance on UR16e, $+0.2816$~m on KUKA iiwa, zero collisions).
 \end{enumerate}
 
-\subsection*{Automated Turnaround and Pipeline Efficiency}
+\subsection{Automated Turnaround and Pipeline Efficiency}
 
 \noindent\textbf{Hypothesis Tested:} \textit{The end-to-end pipeline deterministically ingests raw URDF XML files, synthesizes DH parameters, sanitizes inertial tensors, and emits compilable ANSI C dynamic models in strictly under 180 seconds with zero manual configuration overrides across diverse industrial robot morphologies.}
 
@@ -728,22 +758,16 @@ To evaluate turnaround efficiency, the complete pipeline was timed from raw URDF
 \end{itemize}
 Across all five platforms, zero human manual interventions or configuration overrides were required. All generated dynamic functions compiled with GCC 13.2.0 under \texttt{-O3} optimization with zero compiler warnings, zero heap allocations, and 100\% pass rates on the five-stage verification dashboard.
 
-\section*{Discussion}
+\section{Discussion} \label{sec:discussion}
 %==============================================================================
 
-This section interprets the results in light of four questions that a reader familiar with robotics software is likely to ask. The first is why a symbolic modeling pipeline is worthwhile when compiled numerical simulators already evaluate dynamics in microseconds; the answer we develop concerns what each kind of tool can offer to gradient-based control design. The second is how far the approach scales with the number of joints, and where recursive algorithms remain the better choice. The third is how the reduction in computational cost translates into practical benefits for predictive control, and what remains to be done to reach embedded real-time rates. The last is the value of the framework for teaching, where it links textbook derivations with the models used in modern simulation. Throughout, we also state the scope of the study, which is limited to open-chain serial manipulators.
-
-\subsection*{Symbolic Models versus Numerical Simulators for Control Synthesis}
-
-A foundational question in modern robotics architecture is: \textit{given that numerical engines such as MuJoCo and Pinocchio evaluate forward and inverse dynamics in microseconds using compiled C/C++ spatial algebra, why is an analytical DH-to-CasADi pipeline necessary?} The answer lies in the structural asymmetry between \textbf{forward state rollout} and \textbf{gradient-based optimal control synthesis}:
+A central question in modern robotics is whether an analytical DH-to-CasADi pipeline is still needed when numerical engines such as MuJoCo and Pinocchio can evaluate forward and inverse dynamics in microseconds. The key distinction is between efficient state evaluation and derivative-aware optimization. Although numerical simulators excel at trajectory rollout, model-based control and trajectory optimization additionally require exact sensitivities and structured derivatives, motivating the use of analytical symbolic models:
 \begin{enumerate}
-	\item \textbf{Numerical Simulators as Virtual Plants vs.\ Symbolic AD Graphs as Control Synthesizers:} As identified in previous studies \cite{omar2022framework, asker2024physics}, multibody simulators are architected primarily as forward time-stepping engines using recursive $\mathcal{O}(n)$ algorithms and convex contact solvers \cite{todorov2012mujoco, featherstone2008rigid}. Because their internal state transitions are procedural C routines rather than differentiable symbolic expression graphs, obtaining the state-transition Jacobian $\bm{A}_k = \partial \bm{\phi}_{\text{RK4}}/\partial \bm{x}_k$ and control Jacobian $\bm{B}_k = \partial \bm{\phi}_{\text{RK4}}/\partial \bm{u}_k$ for trajectory optimization or NMPC requires $2(n_x + n_u)$ finite-difference perturbations per shooting node, and cannot provide exact second-order Lagrangian Hessians ($\nabla_{\bm{w}\bm{w}}^2 \mathcal{L}$). Furthermore, their built-in control design tools are restricted to operating-point linearizations \cite{omar2022framework, asker2024physics}. Conversely, our pipeline constructs a closed-form symbolic computation graph. By compressing $\mathbf{c}_{\text{bias}}$ by $63.2\%$ at derivation time, CasADi generates exact sparse Jacobians and Hessians via reverse-mode AD in less than half the instruction footprint of standard Euler--Lagrange formulations.
-	\item \textbf{From Empirical Data-Driven Discovery to Direct Symbolic Derivation:} Previous attempts to extract nonlinear robot models from physics simulators relied on data-driven regressions (such as SINDy) \cite{omar2022framework, asker2024physics}. While data-driven methods demonstrated that simulation data could in principle reveal nonlinear dynamics, they were severely constrained by the ill-conditioning of trigonometric regressor matrices and required specialized physics constraints to avoid unphysical null-space solutions \cite{omar2022framework, asker2024physics}. Our proposed framework completes this evolutionary trajectory: by extracting the symbolic Euler--Lagrange equations directly from the topological URDF graph, it eliminates the need for persistent trajectory excitation or regression conditioning, guaranteeing exact physics-constrained models with machine-precision parity.
-	\item \textbf{Preservation of Classical DH Structure and Parameter Calibratability:} While spatial-vector libraries (e.g., Pinocchio \cite{carpentier2019pinocchio}) provide CasADi bindings in local link coordinates, industrial robot controllers, kinematic calibration standards (such as Leica laser-tracker DH identification \cite{zhou2026gtpn, asr2026calibration}), and nonlinear dynamics textbooks \cite{craig2005introduction, spong2020robot, siciliano2010robotics} are formulated in canonical DH coordinates. Our pipeline uniquely bridges raw URDFs with DH-frame dynamic matrices, allowing identified physical parameters (calibrated masses, CoM offsets, and DH link lengths) to be injected directly into both the analytical controller and the physics simulator \cite{asr2026calibration}.
-	\item \textbf{Bare-Metal ANSI C Deployability:} Deploying full physics simulators onto resource-constrained embedded microcontrollers (e.g., ARM Cortex-M7, STM32, or industrial PLCs) is precluded by operating-system dependencies and dynamic heap allocation (\texttt{malloc}). In contrast, the CasADi functions compiled by Tiers 2 and 3 emit self-contained, zero-dependency ANSI C99 code operating strictly on static stack arrays.
+	\item \textbf{Numerical Simulators as Virtual Plants vs.\ Symbolic AD Graphs as Control Synthesizers:} As identified in previous studies \cite{omar2022framework, asker2024physics}, multibody simulators are architected primarily as forward time-stepping engines using recursive $\mathcal{O}(n)$ algorithms and convex contact solvers \cite{todorov2012mujoco, featherstone2008rigid}. Because their internal state transitions are procedural C routines rather than differentiable symbolic expression graphs, obtaining the state-transition Jacobian $\bm{A}_k = \partial \bm{\phi}_{\text{RK4}}/\partial \bm{x}_k$ and control Jacobian $\bm{B}_k = \partial \bm{\phi}_{\text{RK4}}/\partial \bm{u}_k$ for trajectory optimization or NMPC requires $2(n_x + n_u)$ finite-difference perturbations per shooting node, and cannot provide exact second-order Lagrangian Hessians ($\nabla_{\bm{w}\bm{w}}^2 \mathcal{L}$). Furthermore, their built-in control design tools are restricted to operating-point linearizations \cite{omar2022framework, asker2024physics}. Conversely, CADENCE constructs a closed-form symbolic computation graph. By compressing $\mathbf{c}_{\text{bias}}$ by $63.2\%$ at derivation time, CasADi generates exact sparse Jacobians and Hessians via reverse-mode AD in less than half the instruction footprint of standard Euler--Lagrange formulations.
+	\item \textbf{From Empirical Data-Driven Discovery to Direct Symbolic Derivation:} Previous attempts to extract nonlinear robot models from physics simulators relied on data-driven regressions (such as SINDy) \cite{omar2022framework, asker2024physics}. While data-driven methods demonstrated that simulation data could in principle reveal nonlinear dynamics, they were severely constrained by the ill-conditioning of trigonometric regressor matrices and required specialized physics constraints to avoid unphysical null-space solutions \cite{omar2022framework, asker2024physics}. CADENCE completes this evolutionary trajectory: by extracting the symbolic Euler--Lagrange equations directly from the topological URDF graph, it eliminates the need for persistent trajectory excitation or regression conditioning, guaranteeing exact physics-constrained models with machine-precision parity.
+	\item \textbf{Preservation of Classical DH Structure and Parameter Calibratability:} While spatial-vector libraries (e.g., Pinocchio \cite{carpentier2019pinocchio}) provide CasADi bindings in local link coordinates, industrial robot controllers, kinematic calibration standards (such as Leica laser-tracker DH identification \cite{zhou2026gtpn, asr2026calibration}), and nonlinear dynamics textbooks \cite{craig2005introduction, spong2020robot, siciliano2010robotics} are formulated in canonical DH coordinates. CADENCE uniquely bridges raw URDFs with DH-frame dynamic matrices, allowing identified physical parameters (calibrated masses, CoM offsets, and DH link lengths) to be injected directly into both the analytical controller and the physics simulator \cite{asr2026calibration}.
+	\item \textbf{Bare-Metal ANSI C Deployability:} Deploying full physics simulators onto resource-constrained embedded microcontrollers (e.g., ARM Cortex-M7, STM32, or industrial PLCs) is precluded by operating-system dependencies and dynamic heap allocation (\texttt{malloc}). In contrast, the CasADi functions compiled in \texttt{MATLAB-CasADi} and \texttt{Python-MuJoCo} emit self-contained, zero-dependency ANSI C99 code operating strictly on static stack arrays.
 \end{enumerate}
-
-\subsection*{Scalability Limits and Comparison with Recursive Algorithms}
 
 The multi-DOF scaling benchmark (Figure~\ref{fig:fig6_scalability_complexity} and Table~\ref{tab:table3_scalability}) provides quantitative clarity regarding where white-box symbolic AD graphs stand relative to recursive $\mathcal{O}(n)$ spatial algorithms (such as Featherstone's ABA in MuJoCo and Pinocchio).
 
@@ -752,12 +776,11 @@ While spatial-vector algorithms achieve linear runtime $\mathcal{O}(n)$ for pure
 	\item For small mechanisms ($n \le 4$), Christoffel and momentum formulations exhibit comparable graph sizes, but the momentum formulation avoids $n^3$ explicit partial derivative sweeps;
 	\item For standard industrial and collaborative manipulators ($n = 6$ to $7$), our method slashes graph opcodes by $44.3\%$ to $52.1\%$, reducing single-step forward dynamics latency to $136.6$--$154.3~\mu$s ($>6.4$~kHz);
 	\item For hyper-redundant arms, mobile manipulators, and dual-arm platforms ($n = 10$ to $14$), graph compression reaches $66.9\%$ to $76.8\%$, and the symbolic Cholesky speedup expands from $1.19\times$ up to $3.94\times$. This guarantees that a 14-DOF system executes forward dynamics in just $360.7~\mu$s, remaining comfortably within the $1$~kHz real-time control envelope;
-	\item For extreme-scale mechanisms ($n \ge 30$, such as multi-segment continuum snakes or multi-legged soft robots), recursive spatial-vector formulations with numerical AD bindings remain the method of choice to avoid graph memory bloat. However, for the vast majority of industrial, collaborative, and medical robotic platforms ($n \le 14$), our pipeline provides the optimal confluence of minimal DH parameter inspectability, machine-precision physics parity, and sub-millisecond ANSI C deterministic execution.
+	\item For extreme-scale mechanisms ($n \ge 30$, such as multi-segment continuum snakes or multi-legged soft robots), recursive spatial-vector formulations with numerical AD bindings remain the method of choice to avoid graph memory bloat. However, for the vast majority of industrial, collaborative, and medical robotic platforms ($n \le 14$), CADENCE provides the optimal confluence of minimal DH parameter inspectability, machine-precision physics parity, and sub-millisecond ANSI C deterministic execution.
 \end{itemize}
 
 We deliberately restricted the primary scope of this investigation to open-chain serial manipulators. Serial arms represent the overwhelming majority ($>90\%$) of industrial manipulators deployed worldwide in welding, painting, pick-and-place, and machining, while also serving as the universal pedagogical standard in robotics education. In contrast, closed-loop parallel mechanisms (e.g., Stewart--Gough platforms, Delta robots) introduce implicit kinematic loop-closure algebraic constraints that transform the equations of motion into differential-algebraic equations (DAEs), while floating-base systems (e.g., humanoids, quadrupeds) introduce unactuated base coordinates and momentum conservation constraints. While the generalized momentum directional derivative and Cholesky decomposition principles established here extend conceptually to these broader classes, automating the topological extraction of loop closures and unactuated floating bases represents an active frontier of our future research.
 
-\subsection*{Implications for Receding-Horizon Optimal Control}
 
 The empirical closed-loop NMPC benchmark (Figure~\ref{fig:fig7_nmpc_benchmark} and Table~\ref{tab:table6_nmpc}) demonstrates that symbolic graph compression is not merely a theoretical algebra exercise, but directly relieves the dominant computational bottleneck of numerical optimal control solvers.
 
@@ -770,17 +793,15 @@ Crucially, this instruction compression yields three profound operational advant
 	\item \textbf{Pathway to Real-Time Execution via Real-Time Iterations:} While the present benchmark executed within interpreted Python/CasADi to provide unified cross-language comparisons, compiling the compressed dynamics graphs into standalone ANSI C via CasADi code generation paired with a Real-Time Iteration (RTI) scheme (such as \texttt{acados} or \texttt{qpOASES}) eliminates solver interpretative overhead, compressing solve times into sub-millisecond ranges suitable for $>50$--$100$~Hz embedded predictive control.
 \end{enumerate}
 
-\subsection*{Implications for Robotics Education}
-
-Beyond its computational efficiency and optimal control applications, this framework makes a substantial pedagogical contribution to robotics engineering education. Historically, a deep educational divide has separated theoretical robotics instruction from computational simulation practice:
-\begin{enumerate}
-	\item \textbf{Glass-Box Analytical Transparency vs.\ Opaque XML Black Boxes:} In standard academic curricula, students learn foundational mechanics from textbooks \cite{craig2005introduction, spong2020robot, siciliano2010robotics} by deriving DH parameter tables, computing symbolic Jacobians, and constructing Euler--Lagrange equations for simple 2-DOF or 3-DOF planar arms. When students encounter modern physics simulation platforms (such as Gazebo, MuJoCo, Simscape, or ROS), they are faced with thousands of lines of raw XML containing arbitrary CAD origins and numerical inertia tensors that bear no obvious relationship to their textbook formulas. Our Tier~1 (\texttt{MATLAB-Sym}) provides an interactive glass-box bridge: by inputting any CAD-derived URDF, students can directly inspect the synthesized DH parameters, symbolic homogeneous matrices $\bm{T}_0^i(\bm{q})$, and closed-form dynamic matrices $\bm{M}(\bm{q})$, $\mathbf{c}_{\text{bias}}(\bm{q},\dot{\bm{q}})$, and $\bm{G}(\bm{q})$. This demystifies the internal mechanics of complex industrial robots, allowing learners to verify textbook identities (such as the skew-symmetry of $\dot{\bm{M}}-2\bm{C}$) directly on production-grade manipulators.
-	\item \textbf{Closing the Simulation-to-Control Pedagogical Loop:} In existing educational setups, teaching advanced model-based control (such as Computed Torque Control or NMPC) in high-fidelity simulation requires complex middleware, C++ bindings, or opaque third-party black-box controllers. With our unified Python and MATLAB pipelines (Tiers~2 and 3), students and researchers can design, tune, and test nonlinear feedback controllers directly on simulated URDF plants within a few lines of transparent, human-readable code. By exposing both the analytical controller and the virtual physics engine within a unified mathematical framework, our tool serves as an indispensable educational telescope that connects first-principles analytical mechanics with contemporary digital twin simulation.
-\end{enumerate}
+\subsection*{Implications for Robotics Education} Beyond its computational and control-oriented capabilities, CADENCE offers significant educational value by reducing the gap between analytical robotics instruction and modern simulation-based practice. In many robotics curricula, students develop kinematic and dynamic models from first principles using simplified examples, whereas contemporary robotic software ecosystems rely on URDF descriptions, CAD-generated inertial parameters, and numerical simulation engines whose internal representations are largely hidden from the user. CADENCE establishes a direct link between these two perspectives by exposing the complete modeling pipeline from geometric robot descriptions to executable analytical models. 
+\begin{enumerate} 
+	\item \textbf{Connecting Analytical Models with Industrial Robot Descriptions:} Traditional robotics education emphasizes the derivation of DH parameters, homogeneous transformations, Jacobians, and Euler--Lagrange equations using low-degree-of-freedom manipulators \cite{craig2005introduction, spong2020robot, siciliano2010robotics}. In contrast, industrial robotic systems are typically represented through URDF files containing frame definitions, kinematic relationships, and inertial parameters that are not readily associated with textbook formulations. The \texttt{MATLAB-Sym} modeling environment in CADENCE bridges this gap by automatically generating DH parameters, homogeneous transformations $\bm{T}_0^i(\bm{q})$, and analytical dynamic terms $\bm{M}(\bm{q})$, $\mathbf{c}_{\mathrm{bias}}(\bm{q},\dot{\bm{q}})$, and $\bm{G}(\bm{q})$ directly from a URDF description. This enables students to trace the complete derivation chain from geometric robot models to the equations of motion and to verify fundamental properties of rigid-body dynamics on industrial-scale manipulators. 
+	\item \textbf{Integrating Simulation, Dynamics, and Model-Based Control:} Advanced control topics, including computed-torque control and nonlinear model predictive control (NMPC), are often taught separately from high-fidelity simulation because they require specialized middleware, software interfaces, or proprietary implementations. By generating executable analytical models alongside simulation-compatible implementations, CADENCE provides a unified environment for studying robot dynamics, simulation, and control. Students and researchers can implement, analyze, and validate model-based controllers using the same underlying robot description while maintaining full visibility of the governing mathematical models. This integration facilitates a coherent learning pathway from analytical mechanics and robot modeling to contemporary optimization-based control and digital-twin simulation environments. 
+	\end{enumerate}
 
 	\section*{Conclusions}
 	
-	This work demonstrates that URDF-based multibody simulation can be enhanced with closed-form, differentiable dynamics, enabling the automatic generation of analytical robot models from industrial descriptions. By combining URDF-to-DH conversion, inertia correction, efficient Coriolis evaluation, and symbolic Cholesky-based forward dynamics, the proposed framework produces compact and scalable equations of motion, reducing symbolic complexity and computational cost compared with conventional formulations. Validation on four industrial manipulators confirmed agreement with established simulation platforms, while the resulting models successfully supported trajectory optimization and model-based control. These results establish a practical foundation for integrating analytical dynamics, optimization, and control within modern robotic simulation and digital-twin workflows. Future work will focus on hardware validation, enhanced actuator and friction modeling, and extension to closed-chain and floating-base robotic systems.
+	This work demonstrates that URDF-based multibody simulation can be enhanced with closed-form, differentiable dynamics, enabling the automatic generation of analytical robot models from industrial descriptions. By combining URDF-to-DH conversion, inertia correction, efficient Coriolis evaluation, and symbolic Cholesky-based forward dynamics, CADENCE produces compact and scalable equations of motion, reducing symbolic complexity and computational cost compared with conventional formulations. Validation on four industrial manipulators confirmed agreement with established simulation platforms, while the resulting models successfully supported trajectory optimization and model-based control. These results establish a practical foundation for integrating analytical dynamics, optimization, and control within modern robotic simulation and digital-twin workflows. Future work will focus on hardware validation, enhanced actuator and friction modeling, and extension to closed-chain and floating-base robotic systems.
 	
 	%==============================================================================
 	\section*{Data Availability}
@@ -790,7 +811,7 @@ Beyond its computational efficiency and optimal control applications, this frame
 	%==============================================================================
 	\section*{Code Availability}
 	%==============================================================================
-	The complete source code for all three architectural tiers (Tier 1: Pure MATLAB Symbolic, Tier 2: MATLAB/CasADi + Simscape Multibody, and Tier 3: Python/CasADi + MuJoCo), including the autonomous 5-stage verification suite and NMPC benchmark scripts, is released under the Apache 2.0 license at: \url{https://github.com/Antigravity-Robotics/TriParadigm-DigitalTwins}.
+	The complete source code for all execution environments (\texttt{MATLAB-Sym}, \texttt{MATLAB-CasADi}, and \texttt{Python-MuJoCo}), including the autonomous 5-stage verification suite and NMPC benchmark scripts, is released under the Apache 2.0 license at: \url{https://github.com/Antigravity-Robotics/TriParadigm-DigitalTwins}.
 	
 	%==============================================================================
 	\bibliographystyle{unsrt}
